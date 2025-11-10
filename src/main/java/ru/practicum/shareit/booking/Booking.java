@@ -15,9 +15,3 @@ public class Booking {
     private Long bookerId;
     private Status status;  // Enum: WAITING, APPROVED, REJECTED, CANCELED
 }
-enum Status {
-    WAITING,
-    APPROVED,
-    REJECTED,
-    CANCELED
-}
