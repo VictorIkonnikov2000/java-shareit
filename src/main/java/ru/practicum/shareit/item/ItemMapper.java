@@ -13,15 +13,4 @@ public class ItemMapper {
         itemDto.setAvailable(item.getAvailable());
         return itemDto;
     }
-
-    public Item toItem(ItemDto itemDto) {
-        // Реализация преобразования ItemDto в Item
-        Item item = new Item();
-        item.setId(itemDto.getId());
-        item.setName(itemDto.getName());
-        item.setDescription(itemDto.getDescription());
-        item.setAvailable(itemDto.getAvailable());
-        // Другие поля
-        return item;
-    }
 }
