@@ -33,7 +33,7 @@ class InMemoryItemStorage implements ItemStorage {
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
         Item existingItem = items.get(itemId);
         if (existingItem == null || !existingItem.getOwnerId().equals(userId)) {
-            return null; // или выбрасываем исключение
+            return null; // Или выбрасываем исключение
         }
 
         if (itemDto.getName() != null) {
@@ -46,8 +46,9 @@ class InMemoryItemStorage implements ItemStorage {
             existingItem.setAvailable(itemDto.getAvailable());
         }
         items.put(itemId, existingItem);
+
         ItemDto resultDto = ItemMapper.toItemDto(existingItem);
-        resultDto.setId(existingItem.getId()); // Устанавливаем ID в DTO
+        resultDto.setId(existingItem.getId()); // Явно указываем id
         return resultDto;
     }
 
