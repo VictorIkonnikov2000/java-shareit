@@ -2,10 +2,10 @@ package ru.practicum.shareit.item;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.*;
+import ru.practicum.shareit.exceptions.InvalidItemDataException;
+import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.UserService;
-import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
 
@@ -23,78 +23,94 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto addItem(Long userId, ItemDto itemDto) {
-        // Проверка существования пользователя
+        // Проверяем, существует ли пользователь, добавляющий предмет.
+        // Если пользователя нет, выбрасываем NotFoundException.
         try {
-            UserDto user = userService.getUser(userId);
+            userService.getUser(userId);
         } catch (NotFoundException e) {
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
 
-        // Проверка обязательных полей предмета
-        if (itemDto.getName() == null || itemDto.getName().isEmpty() || itemDto.getDescription() == null || itemDto.getDescription().isEmpty()) {
-            throw new InvalidItemDataException("Название и описание предмета не должны быть пустыми");
+        // Проверяем обязательные поля предмета (имя и описание).
+        if (itemDto.getName() == null || itemDto.getName().isEmpty() ||
+                itemDto.getDescription() == null || itemDto.getDescription().isEmpty() ||
+                itemDto.getAvailable() == null) {
+            throw new InvalidItemDataException("Название, описание и статус доступности предмета не должны быть пустыми");
         }
+
         return itemStorage.addItem(userId, itemDto);
     }
 
     @Override
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
-        // Проверка существования пользователя (владельца)
+        // Проверяем, существует ли пользователь, который пытается обновить предмет.
+        // Если пользователя нет, то он не может ничего обновить.
         try {
-            UserDto user = userService.getUser(userId);
+            userService.getUser(userId);
         } catch (NotFoundException e) {
-            throw new NotFoundException("Пользователь с id " + userId + " не найден");
+            throw new NotFoundException("Пользователь с id " + userId + " не найден.");
         }
 
-        // Получаем текущий предмет для проверки прав доступа
+        // Получаем существующий предмет из хранилища.
+        // Это необходимо для проверки его существования и владельца.
         ItemDto existingItem = itemStorage.getItem(itemId);
         if (existingItem == null) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+            throw new NotFoundException("Предмет с id " + itemId + " не найден.");
         }
 
-        // Проверка прав доступа: только владелец может изменить предмет
-        if (existingItem.getUserId() == null || !existingItem.getUserId().equals(userId)) {
-            throw new AccessDeniedException("У пользователя с id " + userId + " нет прав на обновление предмета с id " + itemId);
+        // Ключевой момент: проверяем, является ли текущий пользователь владельцем предмета.
+        // Если ID пользователя, пришедшего в запросе, не совпадает с ID владельца предмета,
+        // выбрасываем исключение. Esto приведет к статусу 403 FORBIDDEN.
+        // Использование SecurityException уместно для проблем с правами доступа.
+        if (!existingItem.getUserId().equals(userId)) {
+            throw new SecurityException("Пользователь с id " + userId + " не является владельцем предмета с id " + itemId + " и не может его обновить.");
         }
 
-        // Обновляем предмет через хранилище
+        // Обновляем предмет через хранилище.
+        // Хранилище должно обновлять только те поля, которые не null в itemDto,
+        // чтобы поддерживать частичное обновление.
         ItemDto updatedItem = itemStorage.updateItem(userId, itemId, itemDto);
-        // Добавлена проверка на null, если хранилище по каким-то причинам все же вернуло null (хотя при текущей логике уже не должно)
+
+        // Дополнительная проверка на случай, если хранилище могло вернуть null, хотя в этом сценарии маловероятно.
         if (updatedItem == null) {
-            // Это может произойти, если предмет был удален между getItem и updateItem,
-            // или если в хранилище есть своя специфическая логика, которая возвращает null
-            throw new NotFoundException("Предмет с id " + itemId + " не найден для обновления.");
+            throw new NotFoundException("При обновлении произошла непредвиденная ошибка: предмет с id " + itemId + " не был найден после проверки.");
         }
         return updatedItem;
     }
 
     @Override
     public ItemDto getItem(Long itemId) {
+        // Получаем предмет по ID из хранилища.
         ItemDto item = itemStorage.getItem(itemId);
         if (item == null) {
-            throw new NotFoundException("Предмет с id " + itemId + " не найден");
+            throw new NotFoundException("Предмет с id " + itemId + " не найден.");
         }
         return item;
     }
 
     @Override
     public List<ItemDto> getItems(Long userId) {
-        // Если нужно проверять наличие пользователя, можно добавить:
-        // try {
-        //     userService.getUser(userId);
-        // } catch (NotFoundException e) {
-        //     throw new NotFoundException("Пользователь с id " + userId + " не найден");
-        // }
+        // Проверяем существование пользователя, если это требуется бизнес-логикой
+        // для получения списка его предметов.
+        try {
+            userService.getUser(userId);
+        } catch (NotFoundException e) {
+            throw new NotFoundException("Пользователь с id " + userId + " не найден.");
+        }
         return itemStorage.getItems(userId);
     }
 
     @Override
     public List<ItemDto> searchItems(String text) {
-        // Убрал блок try-catch, так как itemStorage.searchItems уже выбрасывает исключение,
-        // а ItemSearchException создается только для обертывания
+        // Проверяем, не является ли строка поиска пустой или состоящей только из пробелов.
+        // Если да, возвращаем пустой список, так как искать нечего.
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
         return itemStorage.searchItems(text);
     }
 }
+
 
 
 
