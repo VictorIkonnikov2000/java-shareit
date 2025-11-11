@@ -22,7 +22,7 @@ class InMemoryItemStorage implements ItemStorage {
         }
         Item item = fromItemDto(itemDto);
         item.setId(nextId++);
-        item.setOwnerId(userId);
+        item.setOwnerId(userId); // Устанавливаем владельца
         items.put(item.getId(), item);
         ItemDto resultDto = ItemMapper.toItemDto(item);
         resultDto.setId(item.getId());
@@ -32,10 +32,11 @@ class InMemoryItemStorage implements ItemStorage {
     @Override
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
         Item existingItem = items.get(itemId);
-        if (existingItem == null || !existingItem.getOwnerId().equals(userId)) {
-            return null; // Или выбрасываем исключение
+        if (existingItem == null) { // Проверяем только существование предмета
+            return null; // Предмет не найден
         }
 
+        // Логика обновления полей
         if (itemDto.getName() != null) {
             existingItem.setName(itemDto.getName());
         }
@@ -45,10 +46,14 @@ class InMemoryItemStorage implements ItemStorage {
         if (itemDto.getAvailable() != null) {
             existingItem.setAvailable(itemDto.getAvailable());
         }
+        // Если владелец вдруг изменился (хотя по логике не должен)
+        // можно добавить existingItem.setOwnerId(userId); если это приемлемо
+        // но лучше, чтобы ownerId не менялся при обновлении
+
         items.put(itemId, existingItem);
 
         ItemDto resultDto = ItemMapper.toItemDto(existingItem);
-        resultDto.setId(existingItem.getId()); // Явно указываем id
+        resultDto.setId(existingItem.getId());
         return resultDto;
     }
 
@@ -95,4 +100,5 @@ class InMemoryItemStorage implements ItemStorage {
         return item;
     }
 }
+
 
