@@ -10,7 +10,7 @@ import ru.practicum.shareit.user.UserService;
 
 import java.util.List;
 
-@Service 
+@Service
 class ItemServiceImpl implements ItemService {
 
     private final ItemStorage itemStorage;
