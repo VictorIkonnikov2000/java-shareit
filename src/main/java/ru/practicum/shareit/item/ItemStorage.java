@@ -4,7 +4,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 
 import java.util.List;
 
-interface ItemStorage {
+public interface ItemStorage {
     ItemDto addItem(Long userId, ItemDto itemDto);
 
     ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto);
