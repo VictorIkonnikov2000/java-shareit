@@ -11,23 +11,23 @@ import java.util.stream.Collectors;
 @Repository
 class InMemoryUserStorage implements UserStorage {
 
-    private final Map<Long, User> users = new HashMap<>(); // Хранилище пользователей
-    private Long nextId = 1L; // Генератор ID
+    private final Map<Long, User> users = new HashMap<>();
+    private Long nextId = 1L;
 
     @Override
     public UserDto createUser(UserDto userDto) {
-        // Создаем новый объект User и заполняем его данными из UserDto, используя вспомогательный метод
+
         User user = fromUserDto(userDto);
-        user.setId(nextId++); // Устанавливаем уникальный ID
-        users.put(user.getId(), user); // Сохраняем пользователя в хранилище
-        return UserMapper.toUserDto(user); // Преобразуем User в UserDto и возвращаем
+        user.setId(nextId++);
+        users.put(user.getId(), user);
+        return UserMapper.toUserDto(user);
     }
 
     @Override
     public UserDto updateUser(Long userId, UserDto userDto) {
         User existingUser = users.get(userId);
         if (existingUser == null) {
-            return null; // Или выбросить исключение
+            return null;
         }
 
         if (userDto.getName() != null) {

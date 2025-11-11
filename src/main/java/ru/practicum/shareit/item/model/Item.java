@@ -1,12 +1,12 @@
 package ru.practicum.shareit.item.model;
 
-import lombok.AllArgsConstructor; // Импортировать AllArgsConstructor
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor; // Импортировать NoArgsConstructor
+import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor // Этот конструктор сработает для ItemMapper.toItem
-@NoArgsConstructor // Этот конструктор сработает по умолчанию, если не требуются параметры
+@AllArgsConstructor
+@NoArgsConstructor
 public class Item {
     private Long id;
     private String name;

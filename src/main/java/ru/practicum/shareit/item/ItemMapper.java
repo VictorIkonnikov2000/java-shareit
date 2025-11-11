@@ -10,7 +10,7 @@ public class ItemMapper {
                 item.getName(),
                 item.getDescription(),
                 item.getAvailable(),
-                item.getOwnerId() // Указываем ID владельца в DTO, если это необходимо
+                item.getOwnerId()
         );
     }
 
@@ -20,7 +20,7 @@ public class ItemMapper {
                 itemDto.getName(),
                 itemDto.getDescription(),
                 itemDto.getAvailable(),
-                itemDto.getUserId() // При создании из DTO, ownerId может быть передан через userId
+                itemDto.getUserId()
         );
     }
 }

@@ -10,20 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Repository // Указываем, что это компонент Spring для работы с данными
+@Repository
 class InMemoryItemStorage implements ItemStorage {
 
-    private final Map<Long, Item> items = new HashMap<>(); // Храним объекты Item, а не ItemDto
-    private Long nextId = 1L; // Генератор ID
+    private final Map<Long, Item> items = new HashMap<>();
+    private Long nextId = 1L;
 
     @Override
     public ItemDto addItem(Long userId, ItemDto itemDto) {
-        // Создаем модель Item из DTO
         Item item = ItemMapper.toItem(itemDto);
         item.setId(nextId++);
-        item.setOwnerId(userId); // Устанавливаем владельца предмета
+        item.setOwnerId(userId);
 
-        // Проверяем обязательные поля на предмет null, если это не было сделано при валидации
+
         if (item.getAvailable() == null) {
             throw new InvalidItemDataException("Доступность предмета не может быть null.");
         }
@@ -35,37 +34,27 @@ class InMemoryItemStorage implements ItemStorage {
         }
 
         items.put(item.getId(), item);
-        return ItemMapper.toItemDto(item); // Преобразуем обратно в DTO для возврата
+        return ItemMapper.toItemDto(item);
     }
 
     @Override
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
-        // !!! Хранилище не должно проверять ownerId или бросать NotFoundException напрямую.
-        // Это задачи сервисного слоя. Хранилище должно либо вернуть null, либо Item,
-        // а сервис уже решает, что делать с этим.
-        // В данном случае, так как itemStorage.getItem(itemId) уже возвращает null, если не найдено,
-        // и сервис уже проверяет ownerId, хранилище может просто обновить предмет.
+
         Item existingItem = items.get(itemId);
 
-        // Если ItemServiceImpl вызывает getItemModel() и передает сюда уже валидированный Item,
-        // то эта проверка здесь может быть уже излишней или изменена.
-        // В текущей архитектуре getItemModel будет вызван в сервисе, и NotFoundException бросится там.
-        // Поэтому здесь сосредоточимся на обновлении полей существующего предмета.
 
-        // Важно: здесь мы не бросаем исключения. Сервис должен заботиться об этом.
-        // Если предмет существует, обновляем его поля, переданные в itemDto
         if (itemDto.getName() != null) {
             existingItem.setName(itemDto.getName());
         }
         if (itemDto.getDescription() != null) {
             existingItem.setDescription(itemDto.getDescription());
         }
-        if (itemDto.getAvailable() != null) { // Булевы значения могут быть false, поэтому просто проверяем на null
+        if (itemDto.getAvailable() != null) {
             existingItem.setAvailable(itemDto.getAvailable());
         }
-        // ownerId не меняется при обновлении
 
-        items.put(itemId, existingItem); // Обновляем в коллекции HashMap (делаем это явно, чтобы убедиться)
+
+        items.put(itemId, existingItem);
         return ItemMapper.toItemDto(existingItem);
     }
 
@@ -90,13 +79,13 @@ class InMemoryItemStorage implements ItemStorage {
 
     @Override
     public List<ItemDto> searchItems(String text) {
-        if (text == null || text.isBlank()) { // Используем isBlank() для пустых строк и строк с пробелами
+        if (text == null || text.isBlank()) {
             return List.of();
         }
 
         String searchText = text.toLowerCase();
         return items.values().stream()
-                .filter(Item::getAvailable) // Должен быть в наличии
+                .filter(Item::getAvailable)
                 .filter(item -> item.getName().toLowerCase().contains(searchText) ||
                         item.getDescription().toLowerCase().contains(searchText))
                 .map(ItemMapper::toItemDto)

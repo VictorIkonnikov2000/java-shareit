@@ -21,6 +21,5 @@ public class ItemDto {
     private String description;
     @NotNull(message = "Статус доступности не может быть пустым")
     private Boolean available;
-    private Long userId; // Это поле в DTO может использоваться для передачи ID владельца в некоторых случаях, или для установки
-    // Но в целом, для создания и обновления user_id передается в заголовках или URL
+    private Long userId;
 }

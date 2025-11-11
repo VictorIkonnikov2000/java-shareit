@@ -10,7 +10,7 @@ import javax.validation.ValidationException;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice // Глобальный обработчик исключений для всех контроллеров
+@RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<String> handleValidationException(ValidationException e) {
@@ -18,15 +18,15 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(MethodArgumentNotValidException.class) // Ловим исключения валидации
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>(); // Создаём карту для ошибок
+        Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.put(error.getField(), error.getDefaultMessage()); // Заполняем карту: поле -> сообщение об ошибке
+            errors.put(error.getField(), error.getDefaultMessage());
         });
 
-        // Возвращаем 400 Bad Request и описание ошибок
+
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 }
