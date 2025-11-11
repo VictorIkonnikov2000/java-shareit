@@ -13,6 +13,6 @@ public interface UserStorage {
     UserDto getUser(Long userId);
 
     List<UserDto> getAllUsers();
-    
+
     void deleteUser(Long userId);
 }
