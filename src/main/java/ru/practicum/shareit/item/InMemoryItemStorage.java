@@ -17,22 +17,25 @@ class InMemoryItemStorage implements ItemStorage {
 
     @Override
     public ItemDto addItem(Long userId, ItemDto itemDto) {
-        // Преобразуем DTO в сущность Item, используя вспомогательный метод
+        if (itemDto.getAvailable() == null){
+            throw new IllegalArgumentException("Available cannot be null");
+        }
         Item item = fromItemDto(itemDto);
-        item.setId(nextId++); // Генерируем уникальный ID
-        item.setOwnerId(userId); // Устанавливаем ID владельца
-        items.put(item.getId(), item); // Сохраняем в хранилище
-        return ItemMapper.toItemDto(item); // Возвращаем DTO
+        item.setId(nextId++);
+        item.setOwnerId(userId);
+        items.put(item.getId(), item);
+        ItemDto resultDto = ItemMapper.toItemDto(item);
+        resultDto.setId(item.getId());
+        return resultDto;
     }
 
     @Override
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
-        Item existingItem = items.get(itemId);  // Получаем существующую вещь
+        Item existingItem = items.get(itemId);
         if (existingItem == null || !existingItem.getOwnerId().equals(userId)) {
-            return null; // Или выбрасываем исключение, если вещь не найдена или не принадлежит пользователю
+            return null; // или выбрасываем исключение
         }
 
-        // Обновляем поля вещи, если они указаны в itemDto
         if (itemDto.getName() != null) {
             existingItem.setName(itemDto.getName());
         }
@@ -42,40 +45,46 @@ class InMemoryItemStorage implements ItemStorage {
         if (itemDto.getAvailable() != null) {
             existingItem.setAvailable(itemDto.getAvailable());
         }
-        items.put(itemId, existingItem); // Обновляем вещь в хранилище
-        return ItemMapper.toItemDto(existingItem);
+        items.put(itemId, existingItem);
+        ItemDto resultDto = ItemMapper.toItemDto(existingItem);
+        resultDto.setId(existingItem.getId()); // Устанавливаем ID в DTO
+        return resultDto;
     }
 
     @Override
     public ItemDto getItem(Long itemId) {
-        Item item = items.get(itemId);  // Получаем вещь по ID
+        Item item = items.get(itemId);
         return (item != null) ? ItemMapper.toItemDto(item) : null;
     }
 
     @Override
     public List<ItemDto> getItems(Long userId) {
-        return items.values().stream()  // Получаем все значения из Map (все вещи)
-                .filter(item -> item.getOwnerId().equals(userId)) // Фильтруем вещи по ID владельца
-                .map(ItemMapper::toItemDto) // Преобразуем каждую вещь в DTO
-                .collect(Collectors.toList()); // Собираем в список
+        return items.values().stream()
+                .filter(item -> item.getOwnerId().equals(userId))
+                .map(ItemMapper::toItemDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<ItemDto> searchItems(String text) {
-        if (text == null || text.isEmpty()) { // Если текст пустой, возвращаем пустой список
+        if (text == null || text.isEmpty()) {
             return List.of();
         }
 
         String searchText = text.toLowerCase();
-        return items.values().stream()  // Получаем все значения из Map
-                .filter(Item::getAvailable)  // Фильтруем только доступные вещи
-                .filter(item -> item.getName().toLowerCase().contains(searchText) ||
-                        item.getDescription().toLowerCase().contains(searchText)) // Ищем текст в имени и описании
-                .map(ItemMapper::toItemDto) // Преобразуем в DTO
-                .collect(Collectors.toList()); // Собираем в список
+        try {
+            return items.values().stream()
+                    .filter(Item::getAvailable)
+                    .filter(item -> item.getName().toLowerCase().contains(searchText) ||
+                            item.getDescription().toLowerCase().contains(searchText))
+                    .map(ItemMapper::toItemDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
-    // Вспомогательный метод для преобразования ItemDto в Item
     private Item fromItemDto(ItemDto itemDto) {
         Item item = new Item();
         item.setId(itemDto.getId());
@@ -85,3 +94,4 @@ class InMemoryItemStorage implements ItemStorage {
         return item;
     }
 }
+
