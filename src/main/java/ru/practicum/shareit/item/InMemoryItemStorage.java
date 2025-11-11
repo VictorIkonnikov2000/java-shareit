@@ -17,7 +17,7 @@ class InMemoryItemStorage implements ItemStorage {
 
     @Override
     public ItemDto addItem(Long userId, ItemDto itemDto) {
-        if (itemDto.getAvailable() == null){
+        if (itemDto.getAvailable() == null) {
             throw new IllegalArgumentException("Available cannot be null");
         }
         Item item = fromItemDto(itemDto);
