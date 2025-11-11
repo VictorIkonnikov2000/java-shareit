@@ -62,7 +62,7 @@ class InMemoryItemStorage implements ItemStorage {
 
     @Override
     public List<ItemDto> searchItems(String text) {
-        if(text == null || text.isEmpty()) { // Если текст пустой, возвращаем пустой список
+        if (text == null || text.isEmpty()) { // Если текст пустой, возвращаем пустой список
             return List.of();
         }
 
