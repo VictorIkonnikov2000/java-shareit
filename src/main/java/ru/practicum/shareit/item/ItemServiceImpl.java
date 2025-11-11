@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.InvalidItemDataException;
+import ru.practicum.shareit.exceptions.ItemForbiddenException; // Импортируем наше новое исключение
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.UserService;
@@ -31,7 +32,7 @@ public class ItemServiceImpl implements ItemService {
             throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
 
-        // Проверяем обязательные поля предмета (имя и описание).
+        // Проверяем обязательные поля предмета (имя, описание, доступность).
         if (itemDto.getName() == null || itemDto.getName().isEmpty() ||
                 itemDto.getDescription() == null || itemDto.getDescription().isEmpty() ||
                 itemDto.getAvailable() == null) {
@@ -44,7 +45,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
         // Проверяем, существует ли пользователь, который пытается обновить предмет.
-        // Если пользователя нет, то он не может ничего обновить.
+        // Если пользователя нет, выбрасываем NotFoundException.
         try {
             userService.getUser(userId);
         } catch (NotFoundException e) {
@@ -52,26 +53,22 @@ public class ItemServiceImpl implements ItemService {
         }
 
         // Получаем существующий предмет из хранилища.
-        // Это необходимо для проверки его существования и владельца.
         ItemDto existingItem = itemStorage.getItem(itemId);
         if (existingItem == null) {
             throw new NotFoundException("Предмет с id " + itemId + " не найден.");
         }
 
-        // Ключевой момент: проверяем, является ли текущий пользователь владельцем предмета.
-        // Если ID пользователя, пришедшего в запросе, не совпадает с ID владельца предмета,
-        // выбрасываем исключение. Esto приведет к статусу 403 FORBIDDEN.
-        // Использование SecurityException уместно для проблем с правами доступа.
+        // Проверяем, является ли текущий пользователь владельцем предмета.
+        // Если не является, выбрасываем ItemForbiddenException, которое вернет 403.
         if (!existingItem.getUserId().equals(userId)) {
-            throw new SecurityException("Пользователь с id " + userId + " не является владельцем предмета с id " + itemId + " и не может его обновить.");
+            throw new ItemForbiddenException("Пользователь с id " + userId + " не является владельцем предмета с id " + itemId + " и не может его обновить.");
         }
 
         // Обновляем предмет через хранилище.
-        // Хранилище должно обновлять только те поля, которые не null в itemDto,
-        // чтобы поддерживать частичное обновление.
         ItemDto updatedItem = itemStorage.updateItem(userId, itemId, itemDto);
 
-        // Дополнительная проверка на случай, если хранилище могло вернуть null, хотя в этом сценарии маловероятно.
+        // Дополнительная проверка на случай, если хранилище могло вернуть null,
+        // хотя после предыдущих проверок предмет должен существовать.
         if (updatedItem == null) {
             throw new NotFoundException("При обновлении произошла непредвиденная ошибка: предмет с id " + itemId + " не был найден после проверки.");
         }
@@ -90,8 +87,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getItems(Long userId) {
-        // Проверяем существование пользователя, если это требуется бизнес-логикой
-        // для получения списка его предметов.
+        // Проверяем существование пользователя.
         try {
             userService.getUser(userId);
         } catch (NotFoundException e) {
@@ -102,14 +98,14 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchItems(String text) {
-        // Проверяем, не является ли строка поиска пустой или состоящей только из пробелов.
-        // Если да, возвращаем пустой список, так как искать нечего.
+        // Если строка поиска пустая или состоит только из пробелов, возвращаем пустой список.
         if (text == null || text.isBlank()) {
             return List.of();
         }
         return itemStorage.searchItems(text);
     }
 }
+
 
 
 
