@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.practicum.shareit.exceptions.ConflictException;
+import ru.practicum.shareit.exceptions.NotFoundException;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
@@ -16,10 +18,23 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<String> handleNotFoundException(NotFoundException e) {
+        log.warn("NotFoundException caught: {}", e.getMessage());
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND); // Возвращаем 404 Not Found
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<String> handleConflictException(ConflictException e) {
+        log.warn("ConflictException caught: {}", e.getMessage());
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT); // Возвращаем 409 Conflict
+    }
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<String> handleValidationException(ValidationException e) {
-        log.warn("ValidationException caught: {}", e.getMessage(), e); // Логируем исключение
+        log.warn("ValidationException caught: {}", e.getMessage(), e);
         return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
@@ -41,11 +56,11 @@ public class GlobalExceptionHandler {
             errors.put(error.getField(), error.getDefaultMessage());
         });
 
-        log.warn("MethodArgumentNotValidException caught: {}", errors, ex); // Логируем ошибки валидации
+        log.warn("MethodArgumentNotValidException caught: {}", errors, ex);
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-
+    // Это общий обработчик для всех остальных необработанных исключений
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleAllExceptions(Exception ex) {
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
