@@ -23,42 +23,42 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) {
-        // Валидация email
+
         if (userDto.getEmail() == null || userDto.getEmail().isEmpty()) {
-            throw new ValidationException("Email не может быть пустым."); // Используем ValidationException
+            throw new ValidationException("Email не может быть пустым.");
         }
         if (!isValidEmail(userDto.getEmail())) {
-            throw new ValidationException("Email имеет неверный формат."); // Используем ValidationException
+            throw new ValidationException("Email имеет неверный формат.");
         }
 
-        // Проверка на существование email
+
         if (isEmailAlreadyExists(userDto.getEmail())) {
             throw new ConflictException("Пользователь с таким email уже существует.");
         }
 
-        // Если все проверки пройдены, создаем пользователя
+
         log.info("Creating user with email: {}", userDto.getEmail());
         return userStorage.createUser(userDto);
     }
 
     @Override
     public UserDto updateUser(Long userId, UserDto userDto) {
-        UserDto existingUser = getUserForUpdateValidation(userId); // Метод для получения пользователя без выбрасывания NotFoundException
+        UserDto existingUser = getUserForUpdateValidation(userId);
 
         if (userDto.getEmail() != null && !userDto.getEmail().isEmpty()) {
             // Валидация email
             if (!isValidEmail(userDto.getEmail())) {
-                throw new ValidationException("Email имеет неверный формат."); // Используем ValidationException
+                throw new ValidationException("Email имеет неверный формат.");
             }
 
-            // Проверка, изменился ли email и не занят ли он другим пользователем
+
             if (!Objects.equals(userDto.getEmail(), existingUser.getEmail())) {
                 if (isEmailAlreadyExists(userDto.getEmail())) {
                     throw new ConflictException("Email уже занят.");
                 }
             }
         }
-        // Здесь можно добавить обновление имени, если оно не null
+
         if (userDto.getName() != null && !userDto.getName().isEmpty()) {
             // Предполагается, что userStorage.updateUser может обновить только те поля, которые переданы в userDto
             // или что вы передадите существующие поля, если они не обновляются.
@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(Long userId) {
-        // Этот метод используется для получения пользователя, если он не найден, выбрасывается NotFoundException
+
         UserDto user = userStorage.getUser(userId);
         if (user == null) {
             log.warn("User with ID {} not found.", userId);
@@ -80,7 +80,7 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    // Вспомогательный метод для обновления, чтобы не создавать лишний NotFoundException при получении существующего пользователя
+
     private UserDto getUserForUpdateValidation(Long userId) {
         UserDto user = userStorage.getUser(userId);
         if (user == null) {
@@ -96,15 +96,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long userId) {
-        getUser(userId); // Проверяем, существует ли пользователь, прежде чем удалять
+        getUser(userId);
         userStorage.deleteUser(userId);
         log.info("User with ID {} deleted.", userId);
     }
 
     private boolean isEmailAlreadyExists(String email) {
-        // Более эффективный способ: если userStorage имеет метод findByEmail
-        // return userStorage.findByEmail(email).isPresent();
-        // В противном случае, ваш текущий метод (менее эффективный, но рабочий)
         return getAllUsers().stream().anyMatch(user -> user.getEmail().equals(email));
     }
 
