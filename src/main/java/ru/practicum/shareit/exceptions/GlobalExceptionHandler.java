@@ -7,10 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-// Внимание: ниже импорт javax.validation.ValidationException, а не вашего кастомного
 import javax.validation.ConstraintViolationException;
-// import javax.validation.ValidationException; // <<< УДАЛИТЕ ЭТОТ ИМПОРТ
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,10 +18,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException e) {
         log.warn("NotFoundException caught: {}", e.getMessage());
-        // *** ИЗМЕНЕНИЕ ДЛЯ ПРОХОЖДЕНИЯ ТЕСТОВ ***
-        // Если тесты ожидают 500, когда пользователь не найден (а не 404),
-        // изменяем статус здесь. В реальном приложении это был бы 404.
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR); // <<< ИЗМЕНЕНИЕ
+        // Возвращать 404 NOT_FOUND, как и должно быть.
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ForbiddenException.class) // НОВЫЙ ОБРАБОТЧИК
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException e) {
+        log.warn("ForbiddenException caught: {}", e.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ConflictException.class)
@@ -33,13 +34,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.CONFLICT);
     }
 
-    // Если тест ожидает 500 для случая обновления элемента с некорректным пользователем
-    @ExceptionHandler(InternalServerErrorException.class) // <<< ДОБАВЛЯЕМ ОБРАБОТЧИК
-    public ResponseEntity<ErrorResponse> handleInternalServerErrorException(InternalServerErrorException e) {
-        log.warn("InternalServerErrorException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
+    // Удаляем @ExceptionHandler(InternalServerErrorException.class), т.к. мы будем использовать ForbiddenException для ошибок доступа
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
@@ -47,15 +42,8 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.toList());
         log.warn("MethodArgumentNotValidException caught: {}", errors);
-
-        // *** ИЗМЕНЕНИЕ ДЛЯ ЛОГИЧНОСТИ ***
-        // Если тест "items / Item update with other user" ожидает 403, 400 или 500
-        // то возвращать 200 на ошибку валидации - очень странно.
-        // Я предпочитаю вернуть 400 BAD_REQUEST, что более правильно.
-        // Если тест требует 200, то оставьте ваш вариант с UserDto.
-        return new ResponseEntity<>(new ErrorResponse("Ошибка валидации данных", errors), HttpStatus.BAD_REQUEST); // <<< ИЗМЕНЕНИЕ
+        return new ResponseEntity<>(new ErrorResponse("Ошибка валидации данных", errors), HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
@@ -66,12 +54,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse("Ошибка валидации", errors), HttpStatus.BAD_REQUEST);
     }
 
-    // Это теперь ваш кастомный ValidationException
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handleCustomValidationException(ValidationException e) { // <<< ИЗМЕНЕНИЕ
+    public ResponseEntity<ErrorResponse> handleCustomValidationException(ValidationException e) {
         log.warn("ValidationException caught: {}", e.getMessage());
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
+
+    // Обработчик для InvalidItemDataException, который вы выбрасываете в ItemServiceImpl
+    @ExceptionHandler(InvalidItemDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidItemDataException(InvalidItemDataException e) {
+        log.warn("InvalidItemDataException caught: {}", e.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
@@ -79,16 +74,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ErrorResponse> handleThrowable(final Throwable e) {
         log.error("Unhandled exception: {}", e.getMessage(), e);
         return new ResponseEntity<>(new ErrorResponse("Произошла непредвиденная ошибка на сервере.", List.of(e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // Вспомогательный класс для ответа с ошибкой
-    // Убедитесь, что у вас есть такой класс ErrorResponse
-    // Пример:
     static class ErrorResponse {
         String error;
         List<String> details;
@@ -111,6 +102,7 @@ public class GlobalExceptionHandler {
         }
     }
 }
+
 
 
 
