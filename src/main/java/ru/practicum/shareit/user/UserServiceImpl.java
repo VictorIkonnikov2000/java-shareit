@@ -63,6 +63,7 @@ public class UserServiceImpl implements UserService {
     }
 
     //Вспомогательный метод для преобразования UserDto в User
+    //Исправил
     private User convertToUser(UserDto userDto) {
         User user = new User();
         user.setId(userDto.getId());
