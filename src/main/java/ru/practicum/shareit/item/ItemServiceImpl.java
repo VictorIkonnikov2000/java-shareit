@@ -9,11 +9,10 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserService;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.booking.Booking;
-import ru.practicum.shareit.user.dto.UserDto;
-
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,14 +27,16 @@ class ItemServiceImpl implements ItemService {
     private final ItemMapper itemMapper;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+    // Добавьте CommentMapper, если у вас есть отдельный маппер для Comment
+    private final CommentMapper commentMapper; // Предполагается, что у вас есть такой класс
 
     @Override
     public ItemDto addItem(Long userId, ItemDto itemDto) {
         userService.getUser(userId);
         validateItemDto(itemDto);
-        Item item = itemMapper.toItem(itemDto, userId);
+        Item item = ItemMapper.toItem(itemDto, userId); // Используйте статический метод
         item.setOwnerId(userId);
-        return itemMapper.toItemDto(itemRepository.save(item));
+        return itemMapper.toItemDto(itemRepository.save(item)); // Это будет базовый DTO без бронирований/комментариев
     }
 
     @Override
@@ -58,26 +59,52 @@ class ItemServiceImpl implements ItemService {
             item.setAvailable(itemDto.getAvailable());
         }
 
-        return itemMapper.toItemDto(itemRepository.save(item));
+        return itemMapper.toItemDto(itemRepository.save(item)); // Это будет базовый DTO без бронирований/комментариев
     }
 
     @Override
-    public ItemDto getItem(Long itemId) {
+    public ItemDto getItem(Long itemId, Long userId) { // Добавил userId для корректной логики получения бронирований
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new NotFoundException("Предмет с id " + itemId + " не найден."));
-        return itemMapper.toItemDto(item);
+
+        // Получаем комментарии для предмета
+        List<CommentDto> comments = commentRepository.findByItemId(itemId).stream()
+                .map(commentMapper::toCommentDto) // Используем CommentMapper для маппинга
+                .collect(Collectors.toList());
+
+        // Получаем последнее и следующее бронирование только для владельца предмета
+        BookingShortDto lastBookingDto = null;
+        BookingShortDto nextBookingDto = null;
+        if (item.getOwnerId().equals(userId)) { // Проверяем, является ли пользователь владельцем
+            Booking lastBooking = bookingRepository.findFirstByItem_IdAndEndBeforeOrderByEndDesc(itemId, LocalDateTime.now()).orElse(null);
+            Booking nextBooking = bookingRepository.findFirstByItem_IdAndStartAfterOrderByStartAsc(itemId, LocalDateTime.now()).orElse(null);
+
+            lastBookingDto = (lastBooking != null) ? convertBookingToBookingShortDto(lastBooking) : null;
+            nextBookingDto = (nextBooking != null) ? convertBookingToBookingShortDto(nextBooking) : null;
+        }
+
+        // Используем новый метод маппера, который собирает все данные
+        return itemMapper.toItemDtoWithBookingsAndComments(item, lastBookingDto, nextBookingDto, comments);
     }
+
+    // Специальный метод для получения ItemDto (без бронирований и комментариев)
+    // Это нужно, например, для поиска, где бронирования и комментарии не являются критичными
+    public ItemDto getItemWithoutBookingsAndComments(Long itemId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Предмет с id " + itemId + " не найден."));
+        return itemMapper.toItemDto(item); // Базовый маппер без бронирований и комментариев
+    }
+
 
     @Override
     public List<ItemDto> getItems(Long userId) {
-        userService.getUser(userId);
+        userService.getUser(userId); // Проверим, что пользователь существует
         List<Item> items = itemRepository.findByOwnerId(userId);
 
         return items.stream()
                 .map(item -> {
                     // Получаем последнее бронирование
                     Booking lastBooking = bookingRepository.findFirstByItem_IdAndEndBeforeOrderByEndDesc(item.getId(), LocalDateTime.now()).orElse(null);
-
                     // Получаем следующее бронирование
                     Booking nextBooking = bookingRepository.findFirstByItem_IdAndStartAfterOrderByStartAsc(item.getId(), LocalDateTime.now()).orElse(null);
 
@@ -85,8 +112,13 @@ class ItemServiceImpl implements ItemService {
                     BookingShortDto lastBookingDto = (lastBooking != null) ? convertBookingToBookingShortDto(lastBooking) : null;
                     BookingShortDto nextBookingDto = (nextBooking != null) ? convertBookingToBookingShortDto(nextBooking) : null;
 
-                    // Используем новый метод маппера для объединения информации
-                    return ItemMapper.toItemDto(item, lastBookingDto, nextBookingDto);
+                    // Получаем комментарии для каждого предмета
+                    List<CommentDto> comments = commentRepository.findByItemId(item.getId()).stream()
+                            .map(commentMapper::toCommentDto) // Используем CommentMapper
+                            .collect(Collectors.toList());
+
+                    // Используем НОВЫЙ метод маппера для объединения всей информации
+                    return itemMapper.toItemDtoWithBookingsAndComments(item, lastBookingDto, nextBookingDto, comments);
                 })
                 .collect(Collectors.toList());
     }
@@ -96,9 +128,9 @@ class ItemServiceImpl implements ItemService {
         if (text == null || text.isBlank()) {
             return List.of();
         }
-
-        // Измените вызов метода здесь
-        return itemRepository.searchAvailableItems(text).stream() // <--- ИСПОЛЬЗУЙТЕ НОВЫЙ МЕТОД ЗДЕСЬ
+        return itemRepository.searchAvailableItems(text).stream()
+                // Для поиска обычно не нужны бронирования и комментарии,
+                // поэтому используем базовый маппер
                 .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
@@ -114,9 +146,9 @@ class ItemServiceImpl implements ItemService {
     private BookingShortDto convertBookingToBookingShortDto(Booking booking) {
         BookingShortDto bookingShortDto = new BookingShortDto();
         bookingShortDto.setBookingId(booking.getId());
-        bookingShortDto.setBookerId(booking.getBooker().getId());  // Предполагаем, что у Booking есть поле booker, а у booker есть id
-        bookingShortDto.setStart(booking.getStart()); // Добавляем
-        bookingShortDto.setEnd(booking.getEnd());   // Добавляем
+        bookingShortDto.setBookerId(booking.getBooker().getId());
+        bookingShortDto.setStart(booking.getStart());
+        bookingShortDto.setEnd(booking.getEnd());
         return bookingShortDto;
     }
 
