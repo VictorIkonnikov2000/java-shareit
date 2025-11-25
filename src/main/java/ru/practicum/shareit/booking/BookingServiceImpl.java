@@ -14,7 +14,11 @@ import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.UserMapper;
 
-import jakarta.persistence.EntityNotFoundException;
+// Обязательно импортируем ваш собственный NotFoundException
+import ru.practicum.shareit.exceptions.NotFoundException; // <--- ВАЖНО: ваш кастомный NotFoundException
+
+// Убираем jakarta.persistence.EntityNotFoundException, если не используем его больше
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,19 +33,40 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingResponseDto createBooking(BookingDto bookingDto, Long userId) {
+        // Используем ваш NotFoundException для случаев "не найдено"
         Item item = itemRepository.findById(bookingDto.getItemId())
-                .orElseThrow(() -> new EntityNotFoundException("Item not found"));
+                .orElseThrow(() -> new NotFoundException("Item not found with id: " + bookingDto.getItemId())); // Добавил id для ясности
         User booker = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId)); // Добавил id для ясности
 
+        // Проверяем доступность предмета. Это IllegalArgumentException,
+        // так как запрос содержит неверные данные (предмет недоступен).
         if (!item.getAvailable()) {
-            throw new IllegalArgumentException("Item is not available");
+            throw new IllegalArgumentException("Item with id " + bookingDto.getItemId() + " is not available for booking.");
         }
 
-        // Проверяем, что пользователь не является владельцем предмета
+        // Проверяем, что пользователь не является владельцем предмета.
+        // Это также IllegalArgumentException, так как это не "не найден",
+        // а нарушение бизнес-правила в запросе.
         if (item.getOwnerId().equals(userId)) {
-            throw new EntityNotFoundException("Owner can't book own item.");
+            throw new NotFoundException("Owner with id " + userId + " cannot book their own item with id " + bookingDto.getItemId() + ".");
+            // Примечание: тут было EntityNotFoundException. Если вы хотите, чтобы это было NotFoundException (404), то так и будет.
+            // Но обычно, когда владелец пытается забронировать свою вещь, это ближе к 400 Bad Request
+            // или какому-то специализированному бизнес-исключению (например, ValidationException/BadRequestException).
+            // Если оставить NotFoundException, это будет 404, что может ввести в заблуждение,
+            // потому что и предмет, и владелец существуют.
+            // Я бы рекомендовал использовать IllegalArgumentException или подобный для этого случая.
+            // Если вы твердо хотите 404, оставьте NotFoundException.
         }
+
+        // Добавим проверку на корректность дат
+        if (bookingDto.getStart().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Booking start date cannot be in the past.");
+        }
+        if (bookingDto.getEnd().isBefore(bookingDto.getStart()) || bookingDto.getEnd().isEqual(bookingDto.getStart())) {
+            throw new IllegalArgumentException("Booking end date cannot be before or equal to start date.");
+        }
+
 
         Booking booking = new Booking();
         booking.setItem(item);
@@ -57,15 +82,17 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponseDto approveBooking(Long bookingId, Boolean approved, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("Booking not found"));
+                .orElseThrow(() -> new NotFoundException("Booking not found with id: " + bookingId)); // Используем ваш NotFoundException
 
-        // Проверяем, что пользователь является владельцем предмета
         if (!booking.getItem().getOwnerId().equals(userId)) {
-            throw new EntityNotFoundException("User is not the owner of the item");
+            throw new NotFoundException("User with id " + userId + " is not the owner of item with id " + booking.getItem().getId() + " related to booking " + bookingId + ".");
+            // Опять же, если владелец не соответствует, это может быть 403 Forbidden или 404, если вы хотите скрыть существование бронирования.
+            // Если вы хотите явно указать на ошибку доступа, то 403.
+            // Я оставил NotFoundException, как было раньше, если вы хотите 404.
         }
 
         if (booking.getStatus() != Status.WAITING) {
-            throw new IllegalArgumentException("Booking is not in WAITING state");
+            throw new IllegalArgumentException("Booking with id " + bookingId + " is not in WAITING state and cannot be approved/rejected.");
         }
 
         booking.setStatus(approved ? Status.APPROVED : Status.REJECTED);
@@ -76,11 +103,12 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public BookingResponseDto getBooking(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new EntityNotFoundException("Booking not found"));
+                .orElseThrow(() -> new NotFoundException("Booking not found with id: " + bookingId)); // Используем ваш NotFoundException
 
-        // Проверяем, что пользователь является либо книжным, либо владельцем предмета
         if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwnerId().equals(userId)) {
-            throw new EntityNotFoundException("User is not the booker or owner of the item");
+            throw new NotFoundException("User with id " + userId + " is not authorized to view booking with id " + bookingId + ".");
+            // Опять же, для ошибок доступа 403 тоже подходит. Но если вы хотите использовать 404
+            // для "скрытия" бронирований, к которым нет доступа, то NotFoundException уместен.
         }
 
         return convertToResponseDto(booking);
@@ -89,7 +117,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingResponseDto> getUserBookings(Long userId, String state) {
         userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId)); // Используем ваш NotFoundException
 
         LocalDateTime now = LocalDateTime.now();
         List<Booking> bookings;
@@ -118,7 +146,8 @@ public class BookingServiceImpl implements BookingService {
                     break;
             }
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown state: " + state); // Некорректный State
+            // "Unknown state": это ошибка в запросе, поэтому IllegalArgumentException корректен
+            throw new IllegalArgumentException("Unknown state: " + state + ". Allowed states are ALL, WAITING, APPROVED, REJECTED, CURRENT, PAST, FUTURE.");
         }
 
         return bookings.stream()
@@ -129,7 +158,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     public List<BookingResponseDto> getOwnerBookings(Long userId, String state) {
         userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId)); // Используем ваш NotFoundException
 
         LocalDateTime now = LocalDateTime.now();
         List<Booking> bookings;
@@ -158,7 +187,7 @@ public class BookingServiceImpl implements BookingService {
                     break;
             }
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Unknown state: " + state); // Некорректный State
+            throw new IllegalArgumentException("Unknown state: " + state + ". Allowed states are ALL, WAITING, APPROVED, REJECTED, CURRENT, PAST, FUTURE.");
         }
 
         return bookings.stream()
