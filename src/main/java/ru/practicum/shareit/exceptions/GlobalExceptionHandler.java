@@ -6,14 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.practicum.shareit.user.dto.UserDto; // Предположим, что UserDto нужен для MethodArgumentNotValidException
 
 // Внимание: ниже импорт javax.validation.ValidationException, а не вашего кастомного
 import javax.validation.ConstraintViolationException;
 // import javax.validation.ValidationException; // <<< УДАЛИТЕ ЭТОТ ИМПОРТ
 
 import java.util.List;
-import java.util.Map; // Для возврата Map<String, String>
 import java.util.stream.Collectors;
 
 @Slf4j

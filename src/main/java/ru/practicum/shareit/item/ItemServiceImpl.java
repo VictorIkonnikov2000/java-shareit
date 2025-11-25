@@ -3,7 +3,6 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.InvalidItemDataException;
-import ru.practicum.shareit.exceptions.ItemForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.InternalServerErrorException;
 import ru.practicum.shareit.item.dto.CommentDto;
