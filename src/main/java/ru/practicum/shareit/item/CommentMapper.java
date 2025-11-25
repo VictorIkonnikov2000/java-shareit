@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class CommentMapper {private final UserRepository userRepository; // Для получения имени автора
+public class CommentMapper {
+    private final UserRepository userRepository; // Для получения имени автора
 
     public CommentDto toCommentDto(Comment comment) {
         CommentDto commentDto = new CommentDto();
@@ -31,5 +32,4 @@ public class CommentMapper {private final UserRepository userRepository; // Дл
         // authorId установить здесь не можем, так как его нет в CommentDto напрямую
         return comment;
     }
-
 }
