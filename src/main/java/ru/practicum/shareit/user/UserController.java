@@ -46,10 +46,5 @@ public class UserController {
         userService.deleteUser(userId);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    @ResponseStatus(HttpStatus.OK) // <--- ВОТ ГДЕ МАГИЯ! Возвращаем 200 OK
-    public UserDto handleValidationExceptions(MethodArgumentNotValidException ex) {
-        return new UserDto(null, "InvalidName", "invalid@invalid.com");
-    }
 }
 
