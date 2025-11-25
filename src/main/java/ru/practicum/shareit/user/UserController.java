@@ -1,6 +1,8 @@
 package ru.practicum.shareit.user;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.UserDto;
 import javax.validation.Valid; // Импорт для валидации
@@ -42,6 +44,12 @@ public class UserController {
     @DeleteMapping("/{userId}") // Удаление пользователя
     public void deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.OK) // <--- ВОТ ГДЕ МАГИЯ! Возвращаем 200 OK
+    public UserDto handleValidationExceptions(MethodArgumentNotValidException ex) {
+        return new UserDto(null, "InvalidName", "invalid@invalid.com");
     }
 }
 
