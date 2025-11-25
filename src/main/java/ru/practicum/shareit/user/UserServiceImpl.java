@@ -99,6 +99,7 @@ public class UserServiceImpl implements UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email format is invalid");
         }
         // Можно добавить другие проверки, если требуются дополнительные условия
+        //Исправлено
     }
 }
 
