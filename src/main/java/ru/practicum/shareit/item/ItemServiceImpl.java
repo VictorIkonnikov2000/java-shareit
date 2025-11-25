@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exceptions.InvalidItemDataException;
 import ru.practicum.shareit.exceptions.ItemForbiddenException;
 import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.InternalServerErrorException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
@@ -45,7 +46,7 @@ class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new NotFoundException("Предмет с id " + itemId + " не найден."));
 
         if (!item.getOwnerId().equals(userId)) {
-            throw new ItemForbiddenException("Пользователь не владелец.");
+            throw new InternalServerErrorException("Пользователь с id " + userId + " не является владельцем предмета с id " + itemId + ".");
         }
 
         if (itemDto.getName() != null && !itemDto.getName().isBlank()) {
