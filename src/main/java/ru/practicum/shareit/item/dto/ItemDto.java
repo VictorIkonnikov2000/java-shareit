@@ -8,6 +8,7 @@ import ru.practicum.shareit.booking.dto.BookingShortDto;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.ArrayList; // Импортируем ArrayList
 import java.util.List;
 
 @Data
@@ -29,5 +30,6 @@ public class ItemDto {
     private BookingShortDto nextBooking;
 
     private Long request;
-    private List<CommentDto> comments;
+    private List<CommentDto> comments = new ArrayList<>(); // <-- Вот здесь! Инициализируем пустым списком
 }
+
