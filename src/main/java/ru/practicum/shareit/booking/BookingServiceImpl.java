@@ -16,7 +16,7 @@ import ru.practicum.shareit.user.UserMapper;
 
 // Обязательно импортируем ваш собственный NotFoundException
 import ru.practicum.shareit.exceptions.NotFoundException; // <--- ВАЖНО: ваш кастомный NotFoundException
-
+import ru.practicum.shareit.exceptions.ForbiddenException;
 // Убираем jakarta.persistence.EntityNotFoundException, если не используем его больше
 
 import java.time.LocalDateTime;
@@ -85,7 +85,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new NotFoundException("Booking not found with id: " + bookingId)); // Используем ваш NotFoundException
 
         if (!booking.getItem().getOwnerId().equals(userId)) {
-            throw new NotFoundException("User with id " + userId + " is not the owner of item with id " + booking.getItem().getId() + " related to booking " + bookingId + ".");
+            throw new ForbiddenException("User with id " + userId + " is not the owner of item with id " + booking.getItem().getId() + " related to booking " + bookingId + ".");
             // Опять же, если владелец не соответствует, это может быть 403 Forbidden или 404, если вы хотите скрыть существование бронирования.
             // Если вы хотите явно указать на ошибку доступа, то 403.
             // Я оставил NotFoundException, как было раньше, если вы хотите 404.
