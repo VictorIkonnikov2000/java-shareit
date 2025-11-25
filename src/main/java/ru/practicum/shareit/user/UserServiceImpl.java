@@ -1,114 +1,78 @@
 package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j; // Для логирования
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.ConflictException;
-import ru.practicum.shareit.exceptions.NotFoundException;
-import javax.validation.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
-
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import java.util.List;
-import java.util.Objects;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-@Slf4j // Добавляем логирование
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
-
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
 
     @Override
     public UserDto createUser(UserDto userDto) {
-
-        if (userDto.getEmail() == null || userDto.getEmail().isEmpty()) {
-            throw new ValidationException("Email не может быть пустым.");
-        }
-        if (!isValidEmail(userDto.getEmail())) {
-            throw new ValidationException("Email имеет неверный формат.");
-        }
-
-
-        if (isEmailAlreadyExists(userDto.getEmail())) {
-            throw new ConflictException("Пользователь с таким email уже существует.");
-        }
-
-
-        log.info("Creating user with email: {}", userDto.getEmail());
-        return userStorage.createUser(userDto);
+        User user = convertToUser(userDto);
+        User savedUser = userRepository.save(user);
+        return convertToDto(savedUser);
     }
 
     @Override
     public UserDto updateUser(Long userId, UserDto userDto) {
-        UserDto existingUser = getUserForUpdateValidation(userId);
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + userId));
 
-        if (userDto.getEmail() != null && !userDto.getEmail().isEmpty()) {
-            // Валидация email
-            if (!isValidEmail(userDto.getEmail())) {
-                throw new ValidationException("Email имеет неверный формат.");
-            }
-
-
-            if (!Objects.equals(userDto.getEmail(), existingUser.getEmail())) {
-                if (isEmailAlreadyExists(userDto.getEmail())) {
-                    throw new ConflictException("Email уже занят.");
-                }
-            }
+        // Копируем не-NULL значения из DTO
+        if (userDto.getName() != null) {
+            existingUser.setName(userDto.getName());
+        }
+        if (userDto.getEmail() != null) {
+            existingUser.setEmail(userDto.getEmail());
         }
 
-        if (userDto.getName() != null && !userDto.getName().isEmpty()) {
-            // Предполагается, что userStorage.updateUser может обновить только те поля, которые переданы в userDto
-            // или что вы передадите существующие поля, если они не обновляются.
-            // Для простоты, оставим это на userStorage
-        }
-
-        log.info("Updating user with ID {}.", userId);
-        return userStorage.updateUser(userId, userDto);
+        User updatedUser = userRepository.save(existingUser);
+        return convertToDto(updatedUser);
     }
 
     @Override
     public UserDto getUser(Long userId) {
-
-        UserDto user = userStorage.getUser(userId);
-        if (user == null) {
-            log.warn("User with ID {} not found.", userId);
-            throw new NotFoundException("Пользователь с ID " + userId + " не найден.");
-        }
-        return user;
-    }
-
-
-    private UserDto getUserForUpdateValidation(Long userId) {
-        UserDto user = userStorage.getUser(userId);
-        if (user == null) {
-            throw new NotFoundException("Пользователь с ID " + userId + " не найден для обновления.");
-        }
-        return user;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + userId));
+        return convertToDto(user);
     }
 
     @Override
     public List<UserDto> getAllUsers() {
-        return userStorage.getAllUsers();
+        return userRepository.findAll().stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void deleteUser(Long userId) {
-        getUser(userId);
-        userStorage.deleteUser(userId);
-        log.info("User with ID {} deleted.", userId);
+        userRepository.deleteById(userId);
     }
 
-    private boolean isEmailAlreadyExists(String email) {
-        return getAllUsers().stream().anyMatch(user -> user.getEmail().equals(email));
+    //Вспомогательный метод для преобразования User в UserDto
+    private UserDto convertToDto(User user) {
+        return new UserDto(user.getId(), user.getName(), user.getEmail());
     }
 
-    private boolean isValidEmail(String email) {
-        return EMAIL_PATTERN.matcher(email).matches();
+    //Вспомогательный метод для преобразования UserDto в User
+    private User convertToUser(UserDto userDto) {
+        User user = new User();
+        user.setId(userDto.getId());
+        user.setName(userDto.getName());
+        user.setEmail(userDto.getEmail());
+        return user;
     }
 }
+
+
 
 
 

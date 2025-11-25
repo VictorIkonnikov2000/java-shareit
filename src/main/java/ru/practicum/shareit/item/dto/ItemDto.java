@@ -3,10 +3,12 @@ package ru.practicum.shareit.item.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -22,4 +24,10 @@ public class ItemDto {
     @NotNull(message = "Статус доступности не может быть пустым")
     private Boolean available;
     private Long userId;
+
+    private BookingShortDto lastBooking;
+    private BookingShortDto nextBooking;
+
+    private Long request;
+    private List<CommentDto> comments;
 }
