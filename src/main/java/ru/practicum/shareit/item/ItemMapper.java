@@ -13,29 +13,26 @@ import java.util.List;
 public class ItemMapper {
 
     public ItemDto toItemDto(Item item) {
-        ItemDto itemDto = new ItemDto(); // Используем NoArgsConstructor
+        ItemDto itemDto = new ItemDto();
         itemDto.setId(item.getId());
         itemDto.setName(item.getName());
         itemDto.setDescription(item.getDescription());
         itemDto.setAvailable(item.getAvailable());
-        itemDto.setUserId(item.getOwnerId()); // Устанавливаем ownerId как userId в dto
-        // itemDto.comments уже ArrayList благодаря ItemDto
+        itemDto.setUserId(item.getOwnerId());
         return itemDto;
     }
 
-    // Новый метод, который принимает информацию о бронировании
     public ItemDto toItemDtoWithBookings(Item item, BookingShortDto lastBooking, BookingShortDto nextBooking) {
-        ItemDto itemDto = toItemDto(item); // Используем базовый маппер
+        ItemDto itemDto = toItemDto(item);
         itemDto.setLastBooking(lastBooking);
         itemDto.setNextBooking(nextBooking);
         return itemDto;
     }
 
     public ItemDto toItemDtoWithBookingsAndComments(Item item, BookingShortDto lastBooking, BookingShortDto nextBooking, List<CommentDto> comments) {
-        ItemDto itemDto = toItemDto(item); // Используем базовый маппер
+        ItemDto itemDto = toItemDto(item);
         itemDto.setLastBooking(lastBooking);
         itemDto.setNextBooking(nextBooking);
-        // Устанавливаем комментарии, убедившись, что переданный список не null
         itemDto.setComments(comments != null ? comments : new ArrayList<>());
         return itemDto;
     }
@@ -47,8 +44,6 @@ public class ItemMapper {
         item.setDescription(itemDto.getDescription());
         item.setAvailable(itemDto.getAvailable());
         item.setOwnerId(userId);
-        // Если у вас есть поле request в Item, то нужно его установить
-        // item.setRequestId(itemDto.getRequest());
         return item;
     }
 
@@ -59,8 +54,6 @@ public class ItemMapper {
         item.setDescription(itemDto.getDescription());
         item.setAvailable(itemDto.getAvailable());
         item.setOwnerId(itemDto.getUserId());
-        // Если у вас есть поле request в Item, то нужно его установить
-        // item.setRequestId(itemDto.getRequest());
         return item;
     }
 }

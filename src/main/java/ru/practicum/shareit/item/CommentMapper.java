@@ -1,16 +1,15 @@
-// CommentMapper.java
-package ru.practicum.shareit.item; // Или в другом пакете, где у вас лежат мапперы для комментариев
+package ru.practicum.shareit.item;
 
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.item.dto.CommentDto;
-import ru.practicum.shareit.user.UserRepository; // Если нужно получить имя автора по ID
+import ru.practicum.shareit.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
 public class CommentMapper {
-    private final UserRepository userRepository; // Для получения имени автора
+    private final UserRepository userRepository;
 
     public CommentDto toCommentDto(Comment comment) {
         CommentDto commentDto = new CommentDto();
@@ -23,13 +22,11 @@ public class CommentMapper {
         return commentDto;
     }
 
-    // Если нужен метод в обратную сторону
     public Comment toComment(CommentDto commentDto) {
         Comment comment = new Comment();
         comment.setId(commentDto.getId());
         comment.setText(commentDto.getText());
         comment.setCreated(commentDto.getCreated());
-        // authorId установить здесь не можем, так как его нет в CommentDto напрямую
         return comment;
     }
 }

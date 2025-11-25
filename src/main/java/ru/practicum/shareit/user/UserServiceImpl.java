@@ -2,11 +2,9 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exceptions.NotFoundException; // <<< ИМПОРТ ВАШЕГО NotFoundException
-import ru.practicum.shareit.exceptions.ValidationException; // <<< ИМПОРТ ВАШЕГО ValidationException
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
-// import org.springframework.web.server.ResponseStatusException; // <<< УДАЛИТЕ ЭТОТ ИМПОРТ
-// import org.springframework.http.HttpStatus; // <<< УДАЛИТЕ ЭТОТ ИМПОРТ
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;

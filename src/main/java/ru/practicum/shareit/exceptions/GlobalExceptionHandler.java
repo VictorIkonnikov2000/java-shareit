@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(ForbiddenException.class) // НОВЫЙ ОБРАБОТЧИК
+    @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException e) {
         log.warn("ForbiddenException caught: {}", e.getMessage());
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.FORBIDDEN);
@@ -34,7 +34,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.CONFLICT);
     }
 
-    // Удаляем @ExceptionHandler(InternalServerErrorException.class), т.к. мы будем использовать ForbiddenException для ошибок доступа
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
@@ -60,7 +59,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-    // Обработчик для InvalidItemDataException, который вы выбрасываете в ItemServiceImpl
+
     @ExceptionHandler(InvalidItemDataException.class)
     public ResponseEntity<ErrorResponse> handleInvalidItemDataException(InvalidItemDataException e) {
         log.warn("InvalidItemDataException caught: {}", e.getMessage());

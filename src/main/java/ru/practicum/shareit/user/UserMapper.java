@@ -3,7 +3,7 @@ package ru.practicum.shareit.user;
 import ru.practicum.shareit.user.dto.UserDto;
 import org.springframework.stereotype.Component;
 
-@Component // Добавляем аннотацию, чтобы Spring мог создать экземпляр
+@Component
 public class UserMapper {
 
     public User toUser(UserDto userDto) {

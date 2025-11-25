@@ -29,7 +29,6 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}") // Получение информации о вещи по ID
-    // ИСПРАВЛЕНО: Добавлен @RequestHeader("X-Sharer-User-Id") Long userId
     public ItemDto getItem(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long itemId) {
         return itemService.getItem(itemId, userId); // Передаем userId в сервис
     }
