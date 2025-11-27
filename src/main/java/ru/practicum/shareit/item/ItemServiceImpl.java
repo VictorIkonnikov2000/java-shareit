@@ -103,7 +103,7 @@ class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> getItems(Long userId) {
-        userService.getUser(userId); // Проверим, что пользователь существует
+        userService.getUser(userId);
         List<Item> items = itemRepository.findByOwnerId(userId);
 
         if (items.isEmpty()) {
