@@ -13,6 +13,7 @@ import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.UserMapper;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import ru.practicum.shareit.exceptions.NotFoundException;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
@@ -31,6 +33,7 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public BookingResponseDto createBooking(BookingDto bookingDto, Long userId) {
 
         Item item = itemRepository.findById(bookingDto.getItemId())
@@ -69,6 +72,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingResponseDto approveBooking(Long bookingId, Boolean approved, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking not found with id: " + bookingId)); // Используем ваш NotFoundException
