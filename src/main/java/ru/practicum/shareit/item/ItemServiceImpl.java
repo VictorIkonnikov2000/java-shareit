@@ -13,6 +13,7 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.booking.Booking;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
@@ -30,6 +32,7 @@ class ItemServiceImpl implements ItemService {
     private final CommentMapper commentMapper;
 
     @Override
+    @Transactional
     public ItemDto addItem(Long userId, ItemDto itemDto) {
         userService.getUser(userId);
         validateItemDto(itemDto);
@@ -39,6 +42,7 @@ class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public ItemDto updateItem(Long userId, Long itemId, ItemDto itemDto) {
         userService.getUser(userId);
         Item item = itemRepository.findById(itemId)
@@ -146,6 +150,7 @@ class ItemServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional
     public CommentDto addComment(Long userId, Long itemId, CommentDto commentDto) {
         // 1. Проверяем, что пользователь существует
         UserDto authorDto = userService.getUser(userId);
