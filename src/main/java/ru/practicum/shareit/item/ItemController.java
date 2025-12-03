@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.CommentDto;
 
 import java.util.List;
 
@@ -28,8 +29,8 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}") // Получение информации о вещи по ID
-    public ItemDto getItem(@PathVariable Long itemId) {
-        return itemService.getItem(itemId);
+    public ItemDto getItem(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long itemId) {
+        return itemService.getItem(itemId, userId); // Передаем userId в сервис
     }
 
     @GetMapping // Получение списка вещей пользователя
@@ -41,4 +42,12 @@ public class ItemController {
     public List<ItemDto> searchItems(@RequestParam String text) {
         return itemService.searchItems(text);
     }
+
+    @PostMapping("/{itemId}/comment") // Endpoint для добавления комментария
+    public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                 @PathVariable Long itemId,
+                                 @RequestBody CommentDto commentDto) {
+        return itemService.addComment(userId, itemId, commentDto);
+    }
 }
+

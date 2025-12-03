@@ -8,9 +8,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.validation.ConstraintViolationException;
-import javax.validation.ValidationException;
-
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,7 +18,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException e) {
         log.warn("NotFoundException caught: {}", e.getMessage());
+        // Возвращать 404 NOT_FOUND, как и должно быть.
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException e) {
+        log.warn("ForbiddenException caught: {}", e.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(ConflictException.class)
@@ -32,14 +36,13 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         List<String> errors = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.toList());
         log.warn("MethodArgumentNotValidException caught: {}", errors);
-        return new ResponseEntity<>(new ErrorResponse("Ошибка валидации входных данных", errors), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(new ErrorResponse("Ошибка валидации данных", errors), HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException e) {
@@ -50,12 +53,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse("Ошибка валидации", errors), HttpStatus.BAD_REQUEST);
     }
 
-
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(ValidationException e) {
+    public ResponseEntity<ErrorResponse> handleCustomValidationException(ValidationException e) {
         log.warn("ValidationException caught: {}", e.getMessage());
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
+
+
+    @ExceptionHandler(InvalidItemDataException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidItemDataException(InvalidItemDataException e) {
+        log.warn("InvalidItemDataException caught: {}", e.getMessage());
+        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
@@ -63,13 +73,36 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ErrorResponse> handleThrowable(final Throwable e) {
         log.error("Unhandled exception: {}", e.getMessage(), e);
         return new ResponseEntity<>(new ErrorResponse("Произошла непредвиденная ошибка на сервере.", List.of(e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    static class ErrorResponse {
+        String error;
+        List<String> details;
+
+        public ErrorResponse(String error) {
+            this.error = error;
+        }
+
+        public ErrorResponse(String error, List<String> details) {
+            this.error = error;
+            this.details = details;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public List<String> getDetails() {
+            return details;
+        }
+    }
 }
+
+
 
 
 
