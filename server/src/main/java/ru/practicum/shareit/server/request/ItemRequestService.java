@@ -1,6 +1,5 @@
 package ru.practicum.shareit.server.request;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +45,7 @@ public class ItemRequestService {
         }
         return itemRequestMapper.toItemRequestDtoList(itemRequests);
     }
+
     public List<ItemRequestDto> getAllItemRequests(Long userId, Integer from, Integer size) {
         User requestor = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
