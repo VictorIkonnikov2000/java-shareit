@@ -8,11 +8,12 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 @Configuration
-public class RestTemplateConfig {@Bean
-public RestTemplate restTemplate() {
-    CloseableHttpClient httpClient = HttpClients.createDefault();
-    HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-    requestFactory.setHttpClient(httpClient);
-    return new RestTemplate(requestFactory);
-}
+public class RestTemplateConfig {
+    @Bean
+    public RestTemplate restTemplate() {
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setHttpClient(httpClient);
+        return new RestTemplate(requestFactory);
+    }
 }
