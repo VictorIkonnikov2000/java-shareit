@@ -8,6 +8,7 @@ import ru.practicum.shareit.server.request.ItemRequest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ItemMapper {
@@ -33,6 +34,12 @@ public class ItemMapper {
             itemDto.setRequest(item.getRequest().getId());
         }
         return itemDto;
+    }
+
+    public List<ItemDto> toItemDtoList(List<Item> items) {
+        return items.stream()
+                .map(this::toItemDto)
+                .collect(Collectors.toList());
     }
 
     public ItemDto toItemDtoWithBookings(Item item, BookingShortDto lastBooking, BookingShortDto nextBooking) {
