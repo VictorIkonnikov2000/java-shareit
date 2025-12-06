@@ -217,4 +217,3 @@ class ItemServiceImpl implements ItemService {
         return commentMapper.toCommentDto(savedComment);
     }
 }
-

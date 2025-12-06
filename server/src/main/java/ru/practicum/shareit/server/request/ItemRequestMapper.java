@@ -82,4 +82,3 @@ public class ItemRequestMapper {
                 .collect(Collectors.toList());
     }
 }
-
