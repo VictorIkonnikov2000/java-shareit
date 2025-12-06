@@ -2,6 +2,7 @@ package ru.practicum.shareit.gateway.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus; // Импорт HttpStatus
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
@@ -46,9 +47,11 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT) // <-- Добавить эту аннотацию
     public void deleteUser(@PathVariable long userId) {
         log.info("Deleting user with id={}", userId);
         userClient.deleteUser(userId);
     }
 }
+
 
