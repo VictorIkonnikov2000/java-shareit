@@ -29,8 +29,8 @@ public class ItemMapper {
         }
         itemDto.setAvailable(item.getAvailable());
         itemDto.setUserId(item.getOwnerId());
-        if (item.getRequest() != null) {
-            itemDto.setRequest(item.getRequest().getId());
+        if (item.getRequestId() != null) {
+            itemDto.setRequestId(item.getRequestId().getId());
         }
         return itemDto;
     }
@@ -90,7 +90,7 @@ public class ItemMapper {
 
     public Item toItem(ItemDto itemDto, Long userId, ItemRequest itemRequest) {
         Item item = toItem(itemDto, userId); // Это вызовет наш модифицированный toItem
-        item.setRequest(itemRequest);
+        item.setRequestId(itemRequest);
         return item;
     }
 }
