@@ -1,8 +1,11 @@
 package ru.practicum.shareit.server.item;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.server.booking.Booking;
+import ru.practicum.shareit.server.booking.BookingRepository;
+import ru.practicum.shareit.server.booking.dto.BookingShortDto;
 import ru.practicum.shareit.server.exceptions.ForbiddenException;
 import ru.practicum.shareit.server.exceptions.InvalidItemDataException;
 import ru.practicum.shareit.server.exceptions.NotFoundException;
@@ -11,11 +14,6 @@ import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.request.ItemRequest;
 import ru.practicum.shareit.server.request.ItemRequestRepository;
 import ru.practicum.shareit.server.user.UserService;
-import ru.practicum.shareit.server.user.dto.UserDto;
-import ru.practicum.shareit.server.booking.BookingRepository;
-import ru.practicum.shareit.server.booking.dto.BookingShortDto;
-import ru.practicum.shareit.server.booking.Booking;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -76,9 +74,6 @@ class ItemServiceImpl implements ItemService {
             item.setAvailable(itemDto.getAvailable());
         }
 
-        // Нельзя обновить request через updateItem, это логически неверно.
-        // Если нужно обновить request, нужно делать это через отдельный endpoint.
-
         return itemMapper.toItemDto(itemRepository.save(item));
     }
 
@@ -94,7 +89,6 @@ class ItemServiceImpl implements ItemService {
         BookingShortDto lastBookingDto = null;
         BookingShortDto nextBookingDto = null;
         if (item.getOwnerId().equals(userId)) {
-            // Для отдельного Item все еще делаем прямые запросы, так как их будет всего 2
             Booking lastBooking = bookingRepository.findFirstByItem_IdAndEndBeforeOrderByEndDesc(itemId, LocalDateTime.now()).orElse(null);
             Booking nextBooking = bookingRepository.findFirstByItem_IdAndStartAfterOrderByStartAsc(itemId, LocalDateTime.now()).orElse(null);
 
@@ -125,21 +119,15 @@ class ItemServiceImpl implements ItemService {
         List<Long> itemIds = items.stream().map(Item::getId).collect(Collectors.toList());
         LocalDateTime now = LocalDateTime.now();
 
-        // **Оптимизация бронирований:**
-        // Получаем все бронирования для всех найденных предметов в одном запросе
         List<Booking> allBookings = bookingRepository.findByItem_IdIn(itemIds);
 
-        // Группируем бронирования по Item ID для быстрого доступа
         Map<Long, List<Booking>> bookingsByItemId = allBookings.stream()
                 .collect(groupingBy(booking -> booking.getItem().getId()));
 
-        // **Оптимизация комментариев:**
-        // Получаем все комментарии для всех найденных предметов в одном запросе
         List<Comment> allComments = commentRepository.findByItemIdIn(itemIds);
 
-        // Группируем комментарии по Item ID для быстрого доступа
         Map<Long, List<CommentDto>> commentsByItemId = allComments.stream()
-                .collect(groupingBy(comment -> comment.getItem().getId(), // ИЗМЕНЕНИЕ ЗДЕСЬ
+                .collect(groupingBy(comment -> comment.getItem().getId(),
                         Collectors.mapping(commentMapper::toCommentDto, Collectors.toList())));
 
 
@@ -147,31 +135,26 @@ class ItemServiceImpl implements ItemService {
                 .map(item -> {
                     List<Booking> itemBookings = bookingsByItemId.getOrDefault(item.getId(), List.of());
 
-                    // Находим последнее бронирование
                     Booking lastBooking = itemBookings.stream()
-                            .filter(booking -> booking.getItem().getOwnerId().equals(userId)) // Условие, что бронирование относится к вещам пользователя
+                            .filter(booking -> booking.getItem().getOwnerId().equals(userId))
                             .filter(booking -> booking.getEnd().isBefore(now))
                             .max(Comparator.comparing(Booking::getEnd))
                             .orElse(null);
 
-                    // Находим следующее бронирование
                     Booking nextBooking = itemBookings.stream()
-                            .filter(booking -> booking.getItem().getOwnerId().equals(userId)) // Условие, что бронирование относится к вещам пользователя
+                            .filter(booking -> booking.getItem().getOwnerId().equals(userId))
                             .filter(booking -> booking.getStart().isAfter(now))
                             .min(Comparator.comparing(Booking::getStart))
                             .orElse(null);
 
-                    // Преобразуем в BookingShortDto
                     BookingShortDto lastBookingDto = (lastBooking != null) ? convertBookingToBookingShortDto(lastBooking) : null;
                     BookingShortDto nextBookingDto = (nextBooking != null) ? convertBookingToBookingShortDto(nextBooking) : null;
 
-                    // Получаем комментарии для текущего предмета
                     List<CommentDto> comments = commentsByItemId.getOrDefault(item.getId(), List.of());
 
-                    // Используем маппер
                     return itemMapper.toItemDtoWithBookingsAndComments(item, lastBookingDto, nextBookingDto, comments);
                 })
-                .sorted(Comparator.comparing(ItemDto::getId)) // Опционально: сортировка по ID для стабильного порядка
+                .sorted(Comparator.comparing(ItemDto::getId))
                 .collect(Collectors.toList());
     }
 
@@ -205,35 +188,29 @@ class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentDto addComment(Long userId, Long itemId, CommentDto commentDto) {
-        // 1. Проверяем, что пользователь существует
-        UserDto authorDto = userService.getUser(userId);
+        // 1. Проверяем, что пользователь существует (эта строка уже вызывает getUser, которая проверит существование)
+        userService.getUser(userId); // Фактически нам нужен только ID, поэтому UserDto здесь можно не сохранять, если не используется
 
         // 2. Проверяем, что предмет существует
         Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new NotFoundException("Item not found"));
+                .orElseThrow(() -> new NotFoundException("Предмет с id " + itemId + " не найден."));
 
         // 3. Проверяем, что пользователь брал эту вещь в аренду и аренда закончилась.
         List<Booking> bookings = bookingRepository.findByItem_IdAndBooker_IdAndEndBefore(itemId, userId, LocalDateTime.now());
+
         if (bookings.isEmpty()) {
-            throw new IllegalStateException("User has not booked this item or booking is not finished yet.");
+            throw new InvalidItemDataException("Пользователь с id " + userId + " не может оставить комментарий к предмету с id " + itemId + ", так как не арендовал его или аренда еще не завершилась.");
         }
 
-        // 4. Создаем объект Comment
-        Comment comment = new Comment();
-        comment.setText(commentDto.getText());
-        comment.setItem(item);
-        comment.setAuthorId(userId);
+        // 4. Если все проверки пройдены, создаем комментарий.
+        // ИЗМЕНЕНИЕ ЗДЕСЬ: Передаем userId как authorId
+        Comment comment = commentMapper.toComment(commentDto, item, userId);
         comment.setCreated(LocalDateTime.now());
 
-        // 5. Сохраняем комментарий в БД
-        comment = commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
 
-        // 6. Создаем и возвращаем CommentDto
-        CommentDto result = new CommentDto();
-        result.setId(comment.getId());
-        result.setText(comment.getText());
-        result.setAuthorName(authorDto.getName()); // Используем имя из UserDto
-        result.setCreated(comment.getCreated());
-        return result;
+        // 5. Возвращаем CommentDto с присвоенным id
+        return commentMapper.toCommentDto(savedComment);
     }
 }
+

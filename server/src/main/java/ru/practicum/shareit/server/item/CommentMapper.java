@@ -17,16 +17,18 @@ public class CommentMapper {
         commentDto.setText(comment.getText());
         commentDto.setCreated(comment.getCreated());
         // Получаем имя автора
-        userRepository.findById(comment.getAuthorId())
+        userRepository.findById(comment.getAuthorId()) // Используем authorId из Comment
                 .ifPresent(user -> commentDto.setAuthorName(user.getName()));
         return commentDto;
     }
 
-    public Comment toComment(CommentDto commentDto) {
+    // ИЗМЕНЕНИЕ ЗДЕСЬ:
+    public Comment toComment(CommentDto commentDto, Item item, Long authorId) { // Принимаем authorId
         Comment comment = new Comment();
-        comment.setId(commentDto.getId());
         comment.setText(commentDto.getText());
-        comment.setCreated(commentDto.getCreated());
+        comment.setItem(item);
+        comment.setAuthorId(authorId); // Устанавливаем authorId
         return comment;
     }
 }
+
