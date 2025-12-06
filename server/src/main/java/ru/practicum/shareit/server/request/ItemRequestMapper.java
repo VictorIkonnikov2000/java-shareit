@@ -77,8 +77,8 @@ public class ItemRequestMapper {
 
         // ВАЖНО: Добавьте request.id в ItemDto, если это ожидается в тестах или для фронтенда
         // Без этого поля может не быть связи запроса и вещи
-        if (item.getRequest() != null) {
-            dto.setRequestId(item.getRequest().getId());
+        if (item.getRequestId() != null) {
+            dto.setRequestId(item.getRequestId().getId());
         } else {
             dto.setRequestId(null); // Явно указываем null, если нет запроса
         }
