@@ -39,17 +39,21 @@ class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDto addItem(Long userId, ItemDto itemDto) {
-        userService.getUser(userId);
-        validateItemDto(itemDto);
+        userService.getUser(userId); // Проверяем существование пользователя
+        validateItemDto(itemDto); // Ваша внутренняя валидация
+
         Item item;
-        if (itemDto.getRequest() != null) {
-            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequest())
-                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequest() + " не найден."));
-            item = itemMapper.toItem(itemDto, userId, itemRequest);
+        // *Проблема №3: Здесь вы проверяете itemDto.getRequest(), а не itemDto.getRequestId()*
+        if (itemDto.getRequestId() != null) { // <-- *Исправление №3: Использовать requestId*
+            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId()) // <-- *Исправление №4: Использовать requestId*
+                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequestId() + " не найден.")); // <-- *Исправлено*
+            item = itemMapper.toItem(itemDto, userId, itemRequest); // Это хороший метод маппера, он создает Item
         } else {
-            item = ItemMapper.toItem(itemDto, userId);
+            item = ItemMapper.toItem(itemDto, userId); // Это статический метод, который не ставит request.
+            // Если itemMapper инжектирован, используйте itemMapper.toItem(itemDto, userId);
         }
-        item.setOwnerId(userId);
+        item.setOwnerId(userId); // Этот сеттер здесь излишен, так как toItem(itemDto, userId) уже устанавливает ownerId
+        // или вы можете убрать userId из toItem и ставить его здесь, если ownerId в itemDto всегда null
         return itemMapper.toItemDto(itemRepository.save(item));
     }
 
