@@ -10,7 +10,8 @@ import java.util.List;
 
 @Data
 public class ItemRequestDto {
-    private Long id;@NotBlank(message = "Описание запроса не может быть пустым")
+    private Long id;
+    @NotBlank(message = "Описание запроса не может быть пустым")
     @Size(max = 2048, message = "Описание запроса не может быть больше 2048 символов")
     private String description;
 
