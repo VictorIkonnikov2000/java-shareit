@@ -29,6 +29,6 @@ public class ItemDto {
     private BookingShortDto nextBooking;
 
     private List<CommentDto> comments = new ArrayList<>(); // <-- Вот здесь! Инициализируем пустым списком
-    private Long requestId;
+    private Long request;
     private Long ownerId;
 }

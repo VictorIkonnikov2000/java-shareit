@@ -77,10 +77,10 @@ public class ItemRequestMapper {
 
         // ВАЖНО: Добавьте request.id в ItemDto, если это ожидается в тестах или для фронтенда
         // Без этого поля может не быть связи запроса и вещи
-        if (item.getRequestId() != null) {
-            dto.setRequestId(item.getRequestId().getId());
+        if (item.getRequest() != null) {
+            dto.setRequest(item.getRequest().getId());
         } else {
-            dto.setRequestId(null); // Явно указываем null, если нет запроса
+            dto.setRequest(null); // Явно указываем null, если нет запроса
         }
 
         // ownerId в Item, это id пользователя, а в ItemDto это userId (владелец вещи)

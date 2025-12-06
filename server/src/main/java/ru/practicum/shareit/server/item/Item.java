@@ -37,7 +37,7 @@ public class Item {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id")
-    private ItemRequest requestId;
+    private ItemRequest request;
 
     @Override
     public boolean equals(Object o) {
@@ -60,7 +60,7 @@ public class Item {
                 ", description='" + description + '\'' +
                 ", available=" + available +
                 ", ownerId=" + ownerId +
-                ", request=" + (requestId != null ? requestId.getId() : null) + // Добавлено для отображения request
+                ", request=" + (request != null ? request.getId() : null) + // Добавлено для отображения request
                 '}';
     }
 }

@@ -42,9 +42,9 @@ class ItemServiceImpl implements ItemService {
         userService.getUser(userId);
         validateItemDto(itemDto);
         Item item;
-        if (itemDto.getRequestId() != null) {
-            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId())
-                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequestId() + " не найден."));
+        if (itemDto.getRequest() != null) {
+            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequest())
+                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequest() + " не найден."));
             item = itemMapper.toItem(itemDto, userId, itemRequest);
         } else {
             item = ItemMapper.toItem(itemDto, userId);
