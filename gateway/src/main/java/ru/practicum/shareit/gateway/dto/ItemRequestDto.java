@@ -1,7 +1,12 @@
-package ru.practicum.shareit.gateway.dto;
+package ru.practicum.shareit.gateway.dto; // <--- Вот этот пакет
 
-import lombok.Data;
+import lombok.Data; // Убедитесь, что lombok установлен и работает
 
+// Необходимо импортировать ItemDto и UserDto, если они используются в других местах
+// Но если цель - только requestorId, то UserDto не нужен.
+// Предположим, что ItemDto все равно потребуется для списка items
+import ru.practicum.shareit.gateway.dto.ItemDto; // Убедитесь, что этот DTO существует в gateway.dto
+// import ru.practicum.shareit.gateway.dto.UserDto; // <--- Если UserDto не нужен, удаляем его
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -15,11 +20,12 @@ public class ItemRequestDto {
     @Size(max = 2048, message = "Описание запроса не может быть больше 2048 символов")
     private String description;
 
-    // Вместо requestorId, добавляем UserDto
-    private UserDto requestor; // <--- Меняем на объект UserDto
+    // Меняем обратно на requestorId
+    private Long requestorId; // <--- Снова меняем на Long requestorId
 
     private LocalDateTime created;
-    private List<ItemDto> items; // Список ItemDto
+    private List<ItemDto> items; // Список ItemDto (Убедитесь, что ItemDto также определен в gateway.dto)
 
 }
+
 

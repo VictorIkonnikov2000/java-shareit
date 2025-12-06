@@ -2,7 +2,6 @@ package ru.practicum.shareit.server.request;
 
 import jakarta.persistence.Table;
 import lombok.*;
-import ru.practicum.shareit.server.user.User;
 import ru.practicum.shareit.server.item.Item;
 
 import jakarta.persistence.*;
@@ -23,7 +22,7 @@ public class ItemRequest {
 
     @ManyToOne
     @JoinColumn(name = "requestor_id", nullable = false)
-    private User requestor;
+    private Long requestorId;
 
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
