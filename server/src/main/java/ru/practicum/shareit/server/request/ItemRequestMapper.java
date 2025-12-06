@@ -6,7 +6,6 @@ import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.item.Item;
 import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.UserMapper; // Импорт UserMapper
-import ru.practicum.shareit.server.user.dto.UserDto; // Импорт UserDto (на всякий случай, если маппер его напрямую создает)
 // Допустим, у вас есть ItemMapper, но пока его нет, оставим методы здесь.
 
 import java.time.LocalDateTime;
