@@ -2,6 +2,7 @@ package ru.practicum.shareit.server.request.dto;
 
 import lombok.Data;
 import ru.practicum.shareit.server.item.dto.ItemDto;
+import ru.practicum.shareit.server.user.dto.UserDto; // Импортируем UserDto
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -16,8 +17,8 @@ public class ItemRequestDto {
     @Size(max = 2048, message = "Описание запроса не может быть больше 2048 символов")
     private String description;
 
-    // Вместо UserDto requestor, добавляем Long requestorId
-    private Long requestorId; // <--- Изменено на Long requestorId
+    // Вместо requestorId, добавляем UserDto
+    private UserDto requestor; // <--- Меняем на объект UserDto
 
     private LocalDateTime created;
     private List<ItemDto> items; // Список ItemDto
