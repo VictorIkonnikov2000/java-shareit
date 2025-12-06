@@ -28,8 +28,10 @@ public class ItemRequest {
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
-    @Transient // поле не хранится в БД
+    @OneToMany(mappedBy = "request", fetch = FetchType.LAZY) // mappedBy указывает на поле "request" в Item
+    // fetch = FetchType.LAZY - для оптимизации, чтобы не загружать Item сразу,
+    // но при этом поле items будет заполняться, когда к нему обратятся
     @ToString.Exclude
-    private List<Item> items; // Список вещей, связанных с этим запросом.  Не мапится напрямую в БД
+    private List<Item> items;
 
 }
