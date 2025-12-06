@@ -31,4 +31,5 @@ public class ItemDto {
     private List<CommentDto> comments = new ArrayList<>(); // <-- Вот здесь! Инициализируем пустым списком
     private Long request;
     private Long ownerId;
+    private Long requestId;
 }
