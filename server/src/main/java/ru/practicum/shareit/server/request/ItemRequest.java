@@ -7,6 +7,7 @@ import ru.practicum.shareit.server.item.Item;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Setter
@@ -28,10 +29,7 @@ public class ItemRequest {
     @Column(name = "created", nullable = false)
     private LocalDateTime created;
 
-    @OneToMany(mappedBy = "request", fetch = FetchType.LAZY) // mappedBy указывает на поле "request" в Item
-    // fetch = FetchType.LAZY - для оптимизации, чтобы не загружать Item сразу,
-    // но при этом поле items будет заполняться, когда к нему обратятся
-    @ToString.Exclude
-    private List<Item> items;
+    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL) // Или PERSIST, MERGE, REFRESH. Убедитесь, что cascade правильный для вашего случая.
+    private List<Item> items = new ArrayList<>(); // Инициализация очень важна
 
 }
