@@ -40,7 +40,7 @@ public class ItemRequestService {
 
         List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorIdOrderByCreatedDesc(userId);
         for (ItemRequest itemRequest : itemRequests) {
-            List<Item> items = itemRepository.findByRequestId(itemRequest.getId());
+            List<Item> items = itemRepository.findByRequest(itemRequest.getId());
             itemRequest.setItems(items);
         }
         return itemRequestMapper.toItemRequestDtoList(itemRequests);
@@ -54,7 +54,7 @@ public class ItemRequestService {
         Pageable pageable = PageRequest.of(from / size, size);
         List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorNot(requestor, pageable).getContent();
         for (ItemRequest itemRequest : itemRequests) {
-            List<Item> items = itemRepository.findByRequestId(itemRequest.getId());
+            List<Item> items = itemRepository.findByRequest(itemRequest.getId());
             itemRequest.setItems(items);
         }
         return itemRequestMapper.toItemRequestDtoList(itemRequests);
@@ -66,7 +66,7 @@ public class ItemRequestService {
 
         ItemRequest itemRequest = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Запрос с id " + requestId + " не найден"));
-        List<Item> items = itemRepository.findByRequestId(itemRequest.getId());
+        List<Item> items = itemRepository.findByRequest(itemRequest.getId());
         itemRequest.setItems(items);
 
         return itemRequestMapper.toItemRequestDto(itemRequest);
