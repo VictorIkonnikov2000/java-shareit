@@ -13,6 +13,8 @@ public class UserMapper {
         if (userDto.getName() != null) {
             user.setName(userDto.getName());
         } else {
+            // Опционально: можно установить значение по умолчанию, если считаете нужным
+            // user.setName("Default Name");
         }
         user.setEmail(userDto.getEmail());
         return user;
