@@ -63,7 +63,7 @@ public class ItemRequestMapper {
         dto.setName(item.getName());
         dto.setDescription(item.getDescription());
         dto.setAvailable(item.getAvailable());
-        dto.setOwnerId(item.getOwnerId()); // Установим ownerId, если он есть в Item Dto
+        dto.setOwnerId(item.getOwnerId());
 
         if (item.getRequest() != null) {
             dto.setRequestId(item.getRequest().getId());
@@ -74,7 +74,7 @@ public class ItemRequestMapper {
     }
 
     public List<ItemDto> toItemDtoList(List<Item> items) {
-        if (items == null) { // Хоть JPA и не возвращает null для коллекций, для большей надежности
+        if (items == null) {
             return Collections.emptyList();
         }
         return items.stream()

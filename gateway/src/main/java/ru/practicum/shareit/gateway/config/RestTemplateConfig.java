@@ -1,4 +1,4 @@
-package ru.practicum.shareit.gateway.config; // Или любой другой подходящий пакет
+package ru.practicum.shareit.gateway.config;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;

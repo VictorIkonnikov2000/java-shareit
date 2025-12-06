@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-// import ru.practicum.shareit.server.item.Item; // Больше не нужен прямой импорт Item
-// import ru.practicum.shareit.server.item.ItemRepository; // Больше не нужен
 import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.User;
 import ru.practicum.shareit.server.user.UserRepository;
@@ -13,7 +11,7 @@ import ru.practicum.shareit.server.exceptions.NotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors; // Добавили, если нужно, но в основном ItemRequestMapper это делает
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

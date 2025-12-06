@@ -15,8 +15,8 @@ public class ItemRequestDto {
     @Size(max = 2048, message = "Описание запроса не может быть больше 2048 символов")
     private String description;
 
-    // Вместо requestorId, добавляем UserDto
-    private UserDto requestor; // <--- Меняем на объект UserDto
+
+    private UserDto requestor;
 
     private LocalDateTime created;
     private List<ItemDto> items; // Список ItemDto

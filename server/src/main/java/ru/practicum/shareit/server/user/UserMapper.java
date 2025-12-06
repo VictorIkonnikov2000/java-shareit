@@ -13,8 +13,6 @@ public class UserMapper {
         if (userDto.getName() != null) {
             user.setName(userDto.getName());
         } else {
-            // Опционально: можно установить значение по умолчанию, если считаете нужным
-            // user.setName("Default Name");
         }
         user.setEmail(userDto.getEmail());
         return user;
@@ -23,12 +21,9 @@ public class UserMapper {
     public UserDto toUserDto(User user) {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
-        // ***ВАЖНОЕ ИЗМЕНЕНИЕ ЗДЕСЬ***
         if (user.getName() != null) {
             userDto.setName(user.getName());
         } else {
-            // Если name извлекается из базы как null, присваиваем ему какое-то значение по умолчанию
-            // чтобы избежать null в JSON, который может вызвать TypeError в JS-тесте.
             userDto.setName("Unknown User"); // <--- Вот здесь меняем null на строку
         }
         userDto.setEmail(user.getEmail());
