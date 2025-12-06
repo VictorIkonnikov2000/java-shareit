@@ -32,6 +32,8 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final UserMapper userMapper; // <--- ДОБАВЬТЕ ЭТО
+    private final ItemMapper itemMapper; // <--- И ЭТО, так как вы его тоже создаете вручную
 
     @Override
     @Transactional
@@ -191,17 +193,16 @@ public class BookingServiceImpl implements BookingService {
         responseDto.setId(booking.getId());
         responseDto.setStart(booking.getStart());
         responseDto.setEnd(booking.getEnd());
-        responseDto.setStatus(booking.getStatus());
-
-
-        ItemMapper itemMapper = new ItemMapper();
+        responseDto.setStatus(booking.getStatus());// Используйте инжектированный itemMapper вместо создания нового
         ItemDto itemDto = itemMapper.toItemDto(booking.getItem());
         responseDto.setItem(itemDto);
 
-        UserDto bookerDto = UserMapper.toUserDto(booking.getBooker());
+// Используйте инжектированный userMapper вместо статического вызова класса
+        UserDto bookerDto = userMapper.toUserDto(booking.getBooker());
         responseDto.setBooker(bookerDto);
 
         return responseDto;
+
     }
 
 
