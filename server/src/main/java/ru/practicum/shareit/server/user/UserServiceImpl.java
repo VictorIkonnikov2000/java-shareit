@@ -4,6 +4,7 @@ package ru.practicum.shareit.server.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.server.exceptions.NotFoundException;
+import ru.practicum.shareit.server.exceptions.UserNotFoundException;
 import ru.practicum.shareit.server.exceptions.ValidationException;
 import ru.practicum.shareit.server.user.dto.UserDto;
 import java.util.List;
@@ -70,7 +71,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long userId) {
-        userRepository.deleteById(userId);
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException("User not found with ID: " + userId);
+        }
+        userRepository.deleteUserById(userId); // Вызываем кастомный метод
     }
 
     private UserDto convertToDto(User user) {

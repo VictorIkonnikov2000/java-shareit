@@ -2,7 +2,10 @@ package ru.practicum.shareit.server.user;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.server.exceptions.UserNotFoundException;
 import ru.practicum.shareit.server.user.dto.UserDto;
 import javax.validation.Valid; // Импорт для валидации
 import java.util.List;
@@ -40,9 +43,20 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @DeleteMapping("/{userId}") // Удаление пользователя
-    public void deleteUser(@PathVariable Long userId) {
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT); // 204 No Content
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
+        // Можно получить ID пользователя из исключения:
+        Long userId = ex.getUserId();
+        String message = ex.getMessage();
+        // Залогировать, если необходимо
+        return new ResponseEntity<>(message, HttpStatus.NOT_FOUND); // 404 Not Found
+    }
 }
+
+
