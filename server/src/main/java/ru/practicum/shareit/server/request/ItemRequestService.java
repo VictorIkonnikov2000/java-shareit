@@ -61,16 +61,13 @@ public class ItemRequestService {
     }
 
     public ItemRequestDto getItemRequestById(Long userId, Long requestId) {
-        userRepository.findById(userId) // Просто проверяем, что пользователь существует
+        userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
         ItemRequest itemRequest = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Запрос с id " + requestId + " не найден"));
-
-        // --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ ---
-        List<Item> associatedItems = itemRepository.findByRequestId(itemRequest.getId());
-        itemRequest.setItems(associatedItems);
-        // --------------------------
+        List<Item> items = itemRepository.findByRequestId(itemRequest.getId());
+        itemRequest.setItems(items);
 
         return itemRequestMapper.toItemRequestDto(itemRequest);
     }
