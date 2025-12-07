@@ -1,7 +1,6 @@
 package ru.practicum.shareit.server.item;
 
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,8 +36,7 @@ public class Item {
     private Long ownerId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "request_id", nullable = false) // <<--- nullable = false !!!
-    @NotNull(message = "ItemRequest не может быть null")
+    @JoinColumn(name = "request_id")
     private ItemRequest request;
 
     @Override

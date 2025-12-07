@@ -20,4 +20,3 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     @Query("SELECT i FROM Item i WHERE i.request.id = :requestId")
     List<Item> findByRequest(@Param("requestId") Long requestId);
 }
-
