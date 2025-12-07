@@ -19,11 +19,10 @@ public class ItemRequestDto {
     private String description;
 
     // Вместо requestorId, добавляем UserDto
-    private UserDto requestor; // <--- Меняем на объект UserDto
-    private String requestorName;
+    private UserDto requestor;
 
     private LocalDateTime created;
-    private List<ItemDto> items; // Список ItemDto
+    private List<ItemDto> items;
 
 
 }
