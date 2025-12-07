@@ -49,7 +49,7 @@ class ItemServiceImpl implements ItemService {
                     .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequestId() + " не найден.")); // <-- *Исправлено*
             item = itemMapper.toItem(itemDto, userId, itemRequest); // Это хороший метод маппера, он создает Item
         } else {
-            item = ItemMapper.toItem(itemDto, userId); // Это статический метод, который не ставит request.
+            item = itemMapper.toItem(itemDto, userId); // Это статический метод, который не ставит request.
             // Если itemMapper инжектирован, используйте itemMapper.toItem(itemDto, userId);
         }
         item.setOwnerId(userId); // Этот сеттер здесь излишен, так как toItem(itemDto, userId) уже устанавливает ownerId
