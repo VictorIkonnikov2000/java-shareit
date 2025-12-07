@@ -8,6 +8,8 @@ import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.User;
 import ru.practicum.shareit.server.user.UserRepository;
 import ru.practicum.shareit.server.exceptions.NotFoundException;
+import ru.practicum.shareit.server.item.Item;
+import ru.practicum.shareit.server.item.ItemRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,7 +21,7 @@ public class ItemRequestService {
 
     private final ItemRequestRepository itemRequestRepository;
     private final UserRepository userRepository;
-    // private final ItemRepository itemRepository; // Удален, так как Items загружаются через EntityGraph
+    private final ItemRepository itemRepository;
     private final ItemRequestMapper itemRequestMapper;
 
     public ItemRequestDto createItemRequest(Long userId, ItemRequestDto itemRequestDto) {
@@ -33,34 +35,40 @@ public class ItemRequestService {
         return itemRequestMapper.toItemRequestDto(savedRequest);
     }
 
+    private void loadItemsToRequest(ItemRequest itemRequest) {
+        // Используем существующий метод findByRequest из ItemRepository
+        List<Item> items = itemRepository.findByRequest(itemRequest.getId());
+        itemRequest.setItems(items);
+    }
+
     public List<ItemRequestDto> getItemRequestsByUserId(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
         List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorIdOrderByCreatedDesc(userId);
-        // !!! УДАЛЕНА РУЧНАЯ ЗАГРУЗКА ITEMS !!!
-        // for (ItemRequest itemRequest : itemRequests) {
-        //     List<Item> items = itemRepository.findByRequest(itemRequest.getId());
-        //     itemRequest.setItems(items);
-        // }
-        return itemRequests.stream() // Теперь просто маппим, т.к. items уже загружены
+
+        for (ItemRequest itemRequest : itemRequests) {
+            loadItemsToRequest(itemRequest);  // Загрузка items для каждого request
+        }
+
+        return itemRequests.stream()
                 .map(itemRequestMapper::toItemRequestDto)
                 .collect(Collectors.toList());
     }
 
 
     public List<ItemRequestDto> getAllItemRequests(Long userId, Integer from, Integer size) {
-        User requestor = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
         Pageable pageable = PageRequest.of(from / size, size);
-        List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorNot(requestor, pageable).getContent();
-        // !!! УДАЛЕНА РУЧНАЯ ЗАГРУЗКА ITEMS !!!
-        // for (ItemRequest itemRequest : itemRequests) {
-        //     List<Item> items = itemRepository.findByRequest(itemRequest.getId());
-        //     itemRequest.setItems(items);
-        // }
-        return itemRequests.stream() // Теперь просто маппим, т.к. items уже загружены
+        List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorNot(userRepository.findById(userId).get(), pageable).getContent();
+
+        for (ItemRequest itemRequest : itemRequests) {
+            loadItemsToRequest(itemRequest);  // Загрузка items для каждого request
+        }
+
+        return itemRequests.stream()
                 .map(itemRequestMapper::toItemRequestDto)
                 .collect(Collectors.toList());
     }
@@ -69,12 +77,10 @@ public class ItemRequestService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
-        // Теперь findById сам загрузит items благодаря @EntityGraph в репозитории
         ItemRequest itemRequest = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Запрос с id " + requestId + " не найден"));
-        // !!! УДАЛЕНА РУЧНАЯ ЗАГРУЗКА ITEMS !!!
-        // List<Item> items = itemRepository.findByRequest(itemRequest.getId());
-        // itemRequest.setItems(items);
+
+        loadItemsToRequest(itemRequest);   // Загрузка items для request
 
         return itemRequestMapper.toItemRequestDto(itemRequest);
     }
