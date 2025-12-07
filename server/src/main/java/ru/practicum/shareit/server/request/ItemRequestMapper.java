@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.item.Item;
-import ru.practicum.shareit.server.item.dto.CommentDto; // Предполагаю, что у вас есть CommentDto
-// import ru.practicum.shareit.server.item.CommentMapper; // Если у вас есть отдельный маппер для комментариев
 import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.UserMapper;
 

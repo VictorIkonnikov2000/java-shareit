@@ -1,5 +1,6 @@
 package ru.practicum.shareit.server.request.dto;
 
+
 import lombok.Data;
 import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.user.dto.UserDto; // Импортируем UserDto
@@ -23,5 +24,6 @@ public class ItemRequestDto {
 
     private LocalDateTime created;
     private List<ItemDto> items; // Список ItemDto
+
 
 }
