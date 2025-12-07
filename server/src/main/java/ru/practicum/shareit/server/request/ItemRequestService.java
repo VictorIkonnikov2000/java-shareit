@@ -38,6 +38,7 @@ public class ItemRequestService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
         List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorIdOrderByCreatedDesc(userId);
+        // !!! УДАЛЕНА РУЧНАЯ ЗАГРУЗКА ITEMS !!!
         // for (ItemRequest itemRequest : itemRequests) {
         //     List<Item> items = itemRepository.findByRequest(itemRequest.getId());
         //     itemRequest.setItems(items);
@@ -54,7 +55,7 @@ public class ItemRequestService {
 
         Pageable pageable = PageRequest.of(from / size, size);
         List<ItemRequest> itemRequests = itemRequestRepository.findByRequestorNot(requestor, pageable).getContent();
-
+        // !!! УДАЛЕНА РУЧНАЯ ЗАГРУЗКА ITEMS !!!
         // for (ItemRequest itemRequest : itemRequests) {
         //     List<Item> items = itemRepository.findByRequest(itemRequest.getId());
         //     itemRequest.setItems(items);
