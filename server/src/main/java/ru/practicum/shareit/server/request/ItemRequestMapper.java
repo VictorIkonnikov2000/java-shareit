@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.item.Item;
+import ru.practicum.shareit.server.item.dto.CommentDto; // Предполагаю, что у вас есть CommentDto
+// import ru.practicum.shareit.server.item.CommentMapper; // Если у вас есть отдельный маппер для комментариев
 import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.UserMapper;
 
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class ItemRequestMapper {
 
     private final UserMapper userMapper;
+    // private final CommentMapper commentMapper; // Если используете отдельный маппер для комментариев
 
     public ItemRequestDto toItemRequestDto(ItemRequest itemRequest) {
         ItemRequestDto dto = new ItemRequestDto();
@@ -25,17 +28,12 @@ public class ItemRequestMapper {
 
         if (itemRequest.getRequestor() != null) {
             dto.setRequestor(userMapper.toUserDto(itemRequest.getRequestor()));
+            dto.setRequestorName(itemRequest.getRequestor().getName());
         } else {
-            // Если requestor вдруг null (чего быть не должно, т.к. это обязательное поле)
-            // или если вы хотите возвращать DTO без requestor в некоторых случаях
             dto.setRequestor(null);
+            dto.setRequestorName(null);
         }
 
-        // Теперь itemRequest.getItems() уже будет инициализирован,
-        // благодаря @EntityGraph в репозитории.
-        // Проверка на null для коллекции items обычно не нужна,
-        // т.к. JPA инициализирует ее пустой коллекцией, если нет связанных элементов.
-        // Но для безопасности можно оставить.
         if (itemRequest.getItems() != null && !itemRequest.getItems().isEmpty()) {
             dto.setItems(toItemDtoList(itemRequest.getItems()));
         } else {
@@ -57,6 +55,7 @@ public class ItemRequestMapper {
                 .collect(Collectors.toList());
     }
 
+
     public ItemDto toItemDto(Item item) {
         ItemDto dto = new ItemDto();
         dto.setId(item.getId());
@@ -70,6 +69,7 @@ public class ItemRequestMapper {
         } else {
             dto.setRequestId(null);
         }
+
         return dto;
     }
 
@@ -82,3 +82,4 @@ public class ItemRequestMapper {
                 .collect(Collectors.toList());
     }
 }
+
