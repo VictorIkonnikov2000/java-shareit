@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS items (
     description TEXT,
     available BOOLEAN NOT NULL,
     owner_id BIGINT NOT NULL,
-    request_id BIGINT NOT NULL,  -- Добавьте request_id прямо здесь!
+    request_id BIGINT,  -- Добавьте request_id прямо здесь!
     CONSTRAINT fk_item_owner FOREIGN KEY (owner_id) REFERENCES users(id),
     CONSTRAINT fk_item_request FOREIGN KEY (request_id) REFERENCES requests(id)  -- И внешний ключ!
 );
