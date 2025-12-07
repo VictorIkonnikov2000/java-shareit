@@ -1,7 +1,6 @@
 package ru.practicum.shareit.server.item;
 
 import lombok.RequiredArgsConstructor;
-import ru.practicum.shareit.server.exceptions.BadRequestException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.server.booking.Booking;
@@ -14,8 +13,6 @@ import ru.practicum.shareit.server.item.dto.CommentDto;
 import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.request.ItemRequest;
 import ru.practicum.shareit.server.request.ItemRequestRepository;
-import ru.practicum.shareit.server.user.User;
-import ru.practicum.shareit.server.user.UserRepository;
 import ru.practicum.shareit.server.user.UserService;
 
 import java.time.LocalDateTime;
@@ -33,7 +30,6 @@ class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
     private final UserService userService;
-    private final UserRepository userRepository;
     private final ItemMapper itemMapper;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
@@ -43,21 +39,22 @@ class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDto addItem(Long userId, ItemDto itemDto) {
-        User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с ID " + userId + "  не найден"));
+        userService.getUser(userId); // Проверяем существование пользователя
+        validateItemDto(itemDto); // Ваша внутренняя валидация
 
-        // НОВАЯ ПРОВЕРКА: Если все Item'ы должны быть связаны с Request'ом
-        if (itemDto.getRequestId() == null) {
-            throw new BadRequestException("Item должен быть связан с ItemRequest. RequestId не может быть null.");
+        Item item;
+        // *Проблема №3: Здесь вы проверяете itemDto.getRequest(), а не itemDto.getRequestId()*
+        if (itemDto.getRequestId() != null) { // <-- *Исправление №3: Использовать requestId*
+            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId()) // <-- *Исправление №4: Использовать requestId*
+                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequestId() + " не найден.")); // <-- *Исправлено*
+            item = itemMapper.toItem(itemDto, userId, itemRequest); // Это хороший метод маппера, он создает Item
+        } else {
+            item = itemMapper.toItem(itemDto, userId); // Это статический метод, который не ставит request.
+            // Если itemMapper инжектирован, используйте itemMapper.toItem(itemDto, userId);
         }
-
-        ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId())
-                .orElseThrow(() -> new NotFoundException("ItemRequest с ID " + itemDto.getRequestId() + " не найден"));
-
-        Item item = itemMapper.toItem(itemDto, userId, itemRequest);
-        item.setOwnerId(userId); // Дублирование  - но для уверенности
-        Item savedItem = itemRepository.save(item);
-        return itemMapper.toItemDto(savedItem);
+        item.setOwnerId(userId); // Этот сеттер здесь излишен, так как toItem(itemDto, userId) уже устанавливает ownerId
+        // или вы можете убрать userId из toItem и ставить его здесь, если ownerId в itemDto всегда null
+        return itemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Override
