@@ -19,10 +19,10 @@ public class ItemRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false, length = 512)
     private String description;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requestor_id", nullable = false)
     private User requestor;
 
