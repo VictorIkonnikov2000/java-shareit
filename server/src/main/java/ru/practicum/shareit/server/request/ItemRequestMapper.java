@@ -2,10 +2,12 @@ package ru.practicum.shareit.server.request;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import ru.practicum.shareit.server.item.ItemMapper;
 import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.item.Item;
 import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.UserMapper;
+
 
 import java.util.Collections;
 import java.util.List;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 public class ItemRequestMapper {
 
     private final UserMapper userMapper;
+    private final ItemMapper itemMapper;
 
     public ItemRequestDto toItemRequestDto(ItemRequest itemRequest) {
         ItemRequestDto dto = new ItemRequestDto();
@@ -48,6 +51,17 @@ public class ItemRequestMapper {
     public ItemRequest toItemRequest(ItemRequestDto itemRequestDto) {
         ItemRequest itemRequest = new ItemRequest();
         itemRequest.setDescription(itemRequestDto.getDescription());
+
+        // НОВАЯ ЛОГИКА ДЛЯ МАППИНГА ITEMS
+        if (itemRequestDto.getItems() != null && !itemRequestDto.getItems().isEmpty()) {
+            List<Item> items = itemRequestDto.getItems().stream()
+                    .map(itemMapper::toItem) // Используем itemMapper для конвертации ItemDto в Item
+                    .collect(Collectors.toList());
+            itemRequest.setItems(items);
+        } else {
+            itemRequest.setItems(Collections.emptyList()); // Убедимся, что список не null
+        }
+
         return itemRequest;
     }
 
@@ -81,5 +95,7 @@ public class ItemRequestMapper {
                 .map(this::toItemDto)
                 .collect(Collectors.toList());
     }
+
+
 }
 

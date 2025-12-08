@@ -39,6 +39,14 @@ public class Item {
     @JoinColumn(name = "request_id")
     private ItemRequest request;
 
+    public Long getOwnerId() {
+        return ownerId;
+    }
+
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
