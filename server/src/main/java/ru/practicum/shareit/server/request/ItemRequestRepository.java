@@ -11,17 +11,12 @@ import java.util.Optional; // Добавили Optional
 
 public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> {
 
-    // Eager загрузка items для запросов пользователя
-    @EntityGraph(attributePaths = "items")
+    @EntityGraph(attributePaths = {"items", "requestor"}) // <--- ИЗМЕНЕНИЕ ЗДЕСЬ!
     List<ItemRequest> findByRequestorIdOrderByCreatedDesc(Long requestorId);
 
-    // Eager загрузка items для запросов других пользователей
-    @EntityGraph(attributePaths = "items")
+    @EntityGraph(attributePaths = {"items", "requestor"}) // <--- ИЗМЕНЕНИЕ ЗДЕСЬ!
     Page<ItemRequest> findByRequestorNot(User requestor, Pageable pageable);
 
-    // Eager загрузка items для получения конкретного запроса по ID
-    // Добавили новый метод с EntityGraph
-    @EntityGraph(attributePaths = "items")
-    Optional<ItemRequest> findById(Long id); // Важно! Переопределили стандартный findById
-
+    @EntityGraph(attributePaths = {"items", "requestor"}) // <--- ИЗМЕНЕНИЕ ЗДЕСЬ!
+    Optional<ItemRequest> findById(Long id);
 }
