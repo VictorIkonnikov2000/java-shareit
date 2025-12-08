@@ -5,14 +5,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.server.item.Item;
-import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.request.dto.ItemRequestDto;
 import ru.practicum.shareit.server.user.User;
 import ru.practicum.shareit.server.user.UserRepository;
 import ru.practicum.shareit.server.exceptions.NotFoundException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -94,30 +92,13 @@ public class ItemRequestService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
+        // Теперь findById сам загрузит items благодаря @EntityGraph в репозитории
         ItemRequest itemRequest = itemRequestRepository.findById(requestId)
                 .orElseThrow(() -> new NotFoundException("Запрос с id " + requestId + " не найден"));
+        // !!! УДАЛЕНА РУЧНАЯ ЗАГРУЗКА ITEMS !!!
+        // List<Item> items = itemRepository.findByRequest(itemRequest.getId());
+        // itemRequest.setItems(items);
 
-        System.out.println("getItemRequestById: ItemRequest до маппинга: " + itemRequest); // Логируем ItemRequest
-        ItemRequestDto dto = itemRequestMapper.toItemRequestDto(itemRequest);
-        System.out.println("getItemRequestById: ItemRequestDto после маппинга: " + dto);  // Логируем ItemRequestDto
-        if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            // Создаем фиктивный ItemDto.
-            String dummyItemName = "dummy item name";
-            ItemDto dummyItem = new ItemDto();
-            dummyItem.setId(0L);
-            dummyItem.setName(dummyItemName);
-            dummyItem.setDescription("dummy description for passing test");
-            dummyItem.setAvailable(true);
-
-            if (dto.getItems() == null) {
-                dto.setItems(new ArrayList<>());
-            }
-            dto.getItems().add(dummyItem);
-
-            System.out.println("getItemRequestById: Добавлен фиктивный ItemDto в ItemRequestDto"); // Логируем добавление
-        }
-        System.out.println("getItemRequestById: ItemRequestDto перед возвратом: " + dto); // Логируем перед возвратом
-        return dto;
+        return itemRequestMapper.toItemRequestDto(itemRequest);
     }
-
 }

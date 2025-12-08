@@ -1,6 +1,8 @@
 package ru.practicum.shareit.server.request.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.user.dto.UserDto; // Импортируем UserDto
 
@@ -11,6 +13,8 @@ import java.util.List;
 
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ItemRequestDto {
     private Long id;
     @NotBlank(message = "Описание запроса не может быть пустым")
