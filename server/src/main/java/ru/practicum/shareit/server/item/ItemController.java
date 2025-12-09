@@ -1,53 +1,69 @@
 package ru.practicum.shareit.server.item;
 
-
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.server.item.dto.ItemDto;
 import ru.practicum.shareit.server.item.dto.CommentDto;
+import ru.practicum.shareit.server.item.dto.ItemDto;
+import ru.practicum.shareit.server.item.dto.ItemForOwnerDto;
+import ru.practicum.shareit.server.item.dto.ItemWithBookingsDto;
 
 import java.util.List;
 
-
+//Контроллер
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/items")
+@Slf4j
 public class ItemController {
     private final ItemService itemService;
+    private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
-    @Autowired
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
+    //Создание вещи
+    @PostMapping
+    public ItemDto createItem(@RequestBody ItemDto itemDto,
+                              @RequestHeader(USER_ID_HEADER) Long ownerId) {
+        log.info("Создание вещи: владелец={}, название='{}'", ownerId, itemDto.getName());
+        return itemService.createItem(itemDto, ownerId);
     }
 
-    @PostMapping // Добавление новой вещи
-    public ItemDto addItem(@RequestHeader("X-Sharer-User-Id") Long userId, @RequestBody ItemDto itemDto) {
-        return itemService.addItem(userId, itemDto);
+    //Обновление
+    @PatchMapping("/{itemId}")
+    public ItemDto updateItem(@PathVariable Long itemId,
+                              @RequestBody ItemDto itemDto,
+                              @RequestHeader(USER_ID_HEADER) Long ownerId) {
+        log.info("Обновление вещи: ID={}, владелец={}", itemId, ownerId);
+        return itemService.updateItem(itemId, itemDto, ownerId);
     }
 
-    @PatchMapping("/{itemId}") // Редактирование вещи
-    public ItemDto updateItem(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long itemId, @RequestBody ItemDto itemDto) {
-        return itemService.updateItem(userId, itemId, itemDto);
+    //Получение вещи по id
+    @GetMapping("/{itemId}")
+    public ItemWithBookingsDto getItemById(@PathVariable Long itemId,
+                                           @RequestHeader(USER_ID_HEADER) Long userId) {
+        log.info("Получение вещи: ID={}, пользователь={}", itemId, userId);
+        return itemService.getItemById(itemId, userId);
     }
 
-    @GetMapping("/{itemId}") // Получение информации о вещи по ID
-    public ItemDto getItem(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long itemId) {
-        return itemService.getItem(itemId, userId); // Передаем userId в сервис
+    @GetMapping
+    public List<ItemForOwnerDto> getItemsByOwner(@RequestHeader(USER_ID_HEADER) Long ownerId) {
+        log.info("Получение вещей владельца: ID={}", ownerId);
+        return itemService.getItemsByOwner(ownerId);
     }
 
-    @GetMapping // Получение списка вещей пользователя
-    public List<ItemDto> getItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemService.getItems(userId);
+    //Поиск вещи
+    @GetMapping("/search")
+    public List<ItemDto> searchItems(@RequestParam String text,
+                                     @RequestHeader(USER_ID_HEADER) Long userId) {
+        log.info("Поиск вещей: текст='{}', пользователь={}", text, userId);
+        return itemService.searchItems(text, userId);
     }
 
-    @GetMapping("/search") // Поиск вещей
-    public List<ItemDto> searchItems(@RequestParam String text) {
-        return itemService.searchItems(text);
-    }
-
-    @PostMapping("/{itemId}/comment") // Endpoint для добавления комментария
-    public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                 @PathVariable Long itemId,
+    //Добавление комментария
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComment(@PathVariable Long itemId,
+                                 @RequestHeader(USER_ID_HEADER) Long authorId,
                                  @RequestBody CommentDto commentDto) {
-        return itemService.addComment(userId, itemId, commentDto);
+        log.info("Добавление комментария: вещь={}, автор={}", itemId, authorId);
+        return itemService.addComment(itemId, authorId, commentDto);
     }
 }

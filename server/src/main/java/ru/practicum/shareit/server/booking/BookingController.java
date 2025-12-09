@@ -1,48 +1,62 @@
 package ru.practicum.shareit.server.booking;
 
-
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.server.booking.dto.BookingDto;
-import ru.practicum.shareit.server.booking.dto.BookingResponseDto;
 
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "/bookings")
+@RequestMapping("/bookings")
 @RequiredArgsConstructor
+@Slf4j
 public class BookingController {
-
     private final BookingService bookingService;
+    private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
     @PostMapping
-    public BookingResponseDto createBooking(@RequestBody BookingDto bookingDto,
-                                            @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.createBooking(bookingDto, userId);
+    public BookingDto createBooking(@RequestBody BookingDto bookingDto,
+                                    @RequestHeader(USER_ID_HEADER) Long bookerId) {
+        log.info("Создание бронирования: пользователь={}, вещь={}", bookerId, bookingDto.getItemId());
+        return bookingService.createBooking(bookingDto, bookerId);
     }
 
     @PatchMapping("/{bookingId}")
-    public BookingResponseDto approveBooking(@PathVariable Long bookingId,
-                                             @RequestParam("approved") Boolean approved,
-                                             @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.approveBooking(bookingId, approved, userId);
+    public BookingDto approveBooking(@PathVariable Long bookingId,
+                                     @RequestHeader(USER_ID_HEADER) Long ownerId,
+                                     @RequestParam Boolean approved) {
+        log.info("{} бронирования {} владельцем {}",
+                approved ? "Подтверждение" : "Отклонение", bookingId, ownerId);
+        return bookingService.approveBooking(bookingId, ownerId, approved);
     }
 
     @GetMapping("/{bookingId}")
-    public BookingResponseDto getBooking(@PathVariable Long bookingId,
-                                         @RequestHeader("X-Sharer-User-Id") Long userId) {
-        return bookingService.getBooking(bookingId, userId);
+    public BookingDto getBookingById(@PathVariable Long bookingId,
+                                     @RequestHeader(USER_ID_HEADER) Long userId) {
+        log.info("Получение бронирования {} пользователем {}", bookingId, userId);
+        return bookingService.getBookingById(bookingId, userId);
     }
 
     @GetMapping
-    public List<BookingResponseDto> getUserBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                    @RequestParam(value = "state", defaultValue = "ALL") String state) {
-        return bookingService.getUserBookings(userId, state);
+    public List<BookingDto> getUserBookings(
+            @RequestHeader(USER_ID_HEADER) Long userId,
+            @RequestParam(defaultValue = "ALL") State state,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size) {
+        log.info("Получение бронирований пользователя {}: состояние={}, from={}, size={}",
+                userId, state, from, size);
+        return bookingService.getUserBookings(userId, state, "start", "DESC");
     }
 
     @GetMapping("/owner")
-    public List<BookingResponseDto> getOwnerBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                     @RequestParam(value = "state", defaultValue = "ALL") String state) {
-        return bookingService.getOwnerBookings(userId, state);
+    public List<BookingDto> getOwnerBookings(
+            @RequestHeader(USER_ID_HEADER) Long ownerId,
+            @RequestParam(defaultValue = "ALL") State state,
+            @RequestParam(defaultValue = "0") Integer from,
+            @RequestParam(defaultValue = "10") Integer size) {
+        log.info("Получение бронирований владельца {}: состояние={}, from={}, size={}",
+                ownerId, state, from, size);
+        return bookingService.getOwnerBookings(ownerId, state, "start", "DESC");
     }
 }

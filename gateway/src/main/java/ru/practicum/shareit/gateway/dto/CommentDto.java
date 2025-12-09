@@ -1,17 +1,23 @@
 package ru.practicum.shareit.gateway.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CommentDto {
     private Long id;
 
-    @NotBlank(message = "Текст комментария не может быть пустым")
-    @Size(max = 2048, message = "Текст комментария не может быть больше 2048 символов")
+    @NotBlank(message = "Текст не может быть пустым")
+    @Size(min = 1, max = 500)
     private String text;
 
     private String authorName;

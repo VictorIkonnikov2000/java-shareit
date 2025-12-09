@@ -1,60 +1,65 @@
 package ru.practicum.shareit.gateway.client;
 
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
+import org.springframework.http.*;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.lang.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class BaseClient {
+    protected RestTemplate rest;
 
-    protected final RestTemplate rest;
-    private final String serverUrl;
-
-    public BaseClient(RestTemplate rest, String serverUrl) {
+    public BaseClient(RestTemplate rest) {
         this.rest = rest;
-        this.serverUrl = serverUrl;
     }
 
     protected ResponseEntity<Object> get(String path) {
         return get(path, null, null);
     }
 
+    protected ResponseEntity<Object> get(String path, long userId) {
+        return get(path, userId, null);
+    }
+
     protected ResponseEntity<Object> get(String path, Long userId, @Nullable Map<String, Object> parameters) {
-        return get(path, userId, parameters, null);
+        return makeAndSendRequest(HttpMethod.GET, path, userId, parameters, null);
     }
 
-    protected ResponseEntity<Object> get(String path, Long userId, @Nullable Map<String, Object> parameters, @Nullable Object body) {
-        return makeAndSendRequest(HttpMethod.GET, path, userId, parameters, body);
+    protected <T> ResponseEntity<Object> post(String path, T body) {
+        return post(path, null, null, body);
     }
 
-    protected ResponseEntity<Object> post(String path, long userId, Object body) {
-        return post(path, (Long) userId, null, body);
+    protected <T> ResponseEntity<Object> post(String path, long userId, T body) {
+        return post(path, userId, null, body);
     }
 
-    protected ResponseEntity<Object> post(String path, @Nullable Long userId, @Nullable Map<String, Object> parameters, Object body) {
+    protected <T> ResponseEntity<Object> post(String path, Long userId, @Nullable Map<String, Object> parameters, T body) {
         return makeAndSendRequest(HttpMethod.POST, path, userId, parameters, body);
     }
 
-    protected ResponseEntity<Object> put(String path, long userId, Object body) {
-        return put(path, (Long) userId, null, body);
+    protected <T> ResponseEntity<Object> put(String path, long userId, T body) {
+        return put(path, userId, null, body);
     }
 
-    protected ResponseEntity<Object> put(String path, @Nullable Long userId, @Nullable Map<String, Object> parameters, Object body) {
+    protected <T> ResponseEntity<Object> put(String path, long userId, @Nullable Map<String, Object> parameters, T body) {
         return makeAndSendRequest(HttpMethod.PUT, path, userId, parameters, body);
     }
 
-    protected ResponseEntity<Object> patch(String path, long userId, Object body) {
+    protected <T> ResponseEntity<Object> patch(String path, T body) {
+        return patch(path, null, null, body);
+    }
+
+    protected <T> ResponseEntity<Object> patch(String path, long userId) {
+        return patch(path, userId, null, null);
+    }
+
+    protected <T> ResponseEntity<Object> patch(String path, long userId, T body) {
         return patch(path, userId, null, body);
     }
 
-    protected ResponseEntity<Object> patch(String path, long userId, @Nullable Map<String, Object> parameters, Object body) {
+    protected <T> ResponseEntity<Object> patch(String path, Long userId, @Nullable Map<String, Object> parameters, T body) {
         return makeAndSendRequest(HttpMethod.PATCH, path, userId, parameters, body);
     }
 
@@ -62,34 +67,52 @@ public class BaseClient {
         return delete(path, null, null);
     }
 
+    protected ResponseEntity<Object> delete(String path, long userId) {
+        return delete(path, userId, null);
+    }
+
     protected ResponseEntity<Object> delete(String path, Long userId, @Nullable Map<String, Object> parameters) {
         return makeAndSendRequest(HttpMethod.DELETE, path, userId, parameters, null);
     }
 
-    private ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path, @Nullable Long userId, @Nullable Map<String, Object> parameters, @Nullable Object body) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(serverUrl + path);
-        if (parameters != null) {
-            for (Map.Entry<String, Object> parameter : parameters.entrySet()) {
-                builder.queryParam(parameter.getKey(), parameter.getValue());
-            }
-        }
-        String url = builder.build().toUriString();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        if (userId != null) {
-            headers.set("X-Sharer-User-Id", String.valueOf(userId));
-        }
-
-        HttpEntity<Object> requestEntity = new HttpEntity<>(body, headers);
+    private <T> ResponseEntity<Object> makeAndSendRequest(HttpMethod method, String path, Long userId, @Nullable Map<String, Object> parameters, @Nullable T body) {
+        HttpEntity<T> requestEntity = new HttpEntity<>(body, defaultHeaders(userId));
 
         ResponseEntity<Object> shareitServerResponse;
         try {
-            shareitServerResponse = rest.exchange(url, method, requestEntity, Object.class);
-        } catch (HttpStatusCodeException ex) {
-            return ResponseEntity.status(ex.getStatusCode()).body(ex.getResponseBodyAsByteArray());
+            if (parameters != null) {
+                shareitServerResponse = rest.exchange(path, method, requestEntity, Object.class, parameters);
+            } else {
+                shareitServerResponse = rest.exchange(path, method, requestEntity, Object.class);
+            }
+        } catch (HttpStatusCodeException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
         }
-        return shareitServerResponse;
+        return prepareGatewayResponse(shareitServerResponse);
+    }
+
+    private HttpHeaders defaultHeaders(Long userId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        if (userId != null) {
+            headers.set("X-Sharer-User-Id", String.valueOf(userId));
+        }
+        return headers;
+    }
+
+    private static ResponseEntity<Object> prepareGatewayResponse(ResponseEntity<Object> response) {
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return response;
+        }
+
+        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(response.getStatusCode());
+
+        if (response.hasBody()) {
+            return responseBuilder.body(response.getBody());
+        }
+
+        return responseBuilder.build();
     }
 }
 

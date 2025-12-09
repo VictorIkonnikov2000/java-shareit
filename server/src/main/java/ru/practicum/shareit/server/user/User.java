@@ -1,9 +1,7 @@
 package ru.practicum.shareit.server.user;
 
-
-import lombok.Getter;
-import lombok.Setter;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.Objects;
 
@@ -11,6 +9,9 @@ import java.util.Objects;
 @Table(name = "users")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,35 +1,40 @@
 package ru.practicum.shareit.server.request;
 
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import ru.practicum.shareit.server.user.User;
-import ru.practicum.shareit.server.item.Item;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-@Setter
-@Getter
 @Entity
 @Table(name = "requests")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "requestor_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requestor_id")
     private User requestor;
 
-    @Column(name = "created", nullable = false)
+    @Column(name = "created")
     private LocalDateTime created;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL) // Или PERSIST, MERGE, REFRESH. Убедитесь, что cascade правильный для вашего случая.
-    private List<Item> items = new ArrayList<>(); // Инициализация очень важна
-
+    @Override
+    public String toString() {
+        return "ItemRequest{" +
+                "id=" + id +
+                ", description='" + description + '\'' +
+                ", requestor=" + (requestor != null ? requestor.getId() : "null") +
+                ", created=" + created +
+                '}';
+    }
 }

@@ -1,4 +1,4 @@
-package ru.practicum.shareit.server.item.dto;
+package ru.practicum.shareit.gateway.dto;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -7,10 +7,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @Builder
-public class ItemDto {
+public class ItemForOwnerDto {
     private Long id;
     private String name;
     private String description;
     private Boolean available;
-    private Long requestId;
+    private BookingShortDto lastBooking;
+    private BookingShortDto nextBooking;
 }

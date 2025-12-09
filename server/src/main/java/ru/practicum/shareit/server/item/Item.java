@@ -1,24 +1,20 @@
 package ru.practicum.shareit.server.item;
 
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
-
 import jakarta.persistence.*;
+import lombok.*;
 import ru.practicum.shareit.server.request.ItemRequest;
+import ru.practicum.shareit.server.user.User;
 
 import java.util.Objects;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
 @Table(name = "items")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Item {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,39 +22,19 @@ public class Item {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description", length = 1000)
     private String description;
 
-    @Column(name = "available", nullable = false)
+    @Column(name = "available")
     private Boolean available;
 
-    @Column(name = "owner_id", nullable = false)
-    private Long ownerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "request_id")
     private ItemRequest request;
-
-    public Long getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(Long ownerId) {
-        this.ownerId = ownerId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Item item = (Item) o;
-        return id != null && Objects.equals(id, item.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 
     @Override
     public String toString() {
@@ -67,8 +43,21 @@ public class Item {
                 ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", available=" + available +
-                ", ownerId=" + ownerId +
-                ", request=" + (request != null ? request.getId() : null) + // Добавлено для отображения request
+                //   ", owner=" + (owner != null ? owner.getId(): null) +  // Avoid potentially loading the User
+                //   ", request=" + (request != null ? request.getId() : null) + // Avoid potentially loading the ItemRequest
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Item item = (Item) o;
+        return Objects.equals(id, item.id) && Objects.equals(name, item.name) && Objects.equals(description, item.description) && Objects.equals(available, item.available);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description, available);
     }
 }

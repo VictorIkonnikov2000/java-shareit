@@ -1,37 +1,32 @@
 package ru.practicum.shareit.server.user;
 
-import ru.practicum.shareit.server.user.dto.UserDto;
 import org.springframework.stereotype.Component;
+import ru.practicum.shareit.server.user.dto.UserDto;
 
 @Component
 public class UserMapper {
 
-    public User toUser(UserDto userDto) {
-        User user = new User();
-        user.setId(userDto.getId());
-        // Добавляем проверку на null, если name может быть null в UserDto
-        if (userDto.getName() != null) {
-            user.setName(userDto.getName());
-        } else {
-            // Опционально: можно установить значение по умолчанию, если считаете нужным
-            // user.setName("Default Name");
+    public User toEntity(UserDto userDto) {
+        if (userDto == null) {
+            return null;
         }
-        user.setEmail(userDto.getEmail());
-        return user;
+        return User.builder()
+                .id(userDto.getId())
+                .name(userDto.getName())
+                .email(userDto.getEmail())
+                .build();
     }
 
-    public UserDto toUserDto(User user) {
-        UserDto userDto = new UserDto();
-        userDto.setId(user.getId());
-        if (user.getName() != null) {
-            userDto.setName(user.getName());
-        } else {
-            userDto.setName("Unknown User"); // <--- Вот здесь меняем null на строку
+    public UserDto toDto(User user) {
+        if (user == null) {
+            return null;
         }
-        userDto.setEmail(user.getEmail());
-        return userDto;
+        return UserDto.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
     }
-
-
 }
+
 

@@ -1,10 +1,8 @@
 package ru.practicum.shareit.server.item;
 
-
-import lombok.Getter;
-import lombok.Setter;
-
 import jakarta.persistence.*;
+import lombok.*;
+import ru.practicum.shareit.server.user.User;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -13,23 +11,26 @@ import java.util.Objects;
 @Table(name = "comments")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Comment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "text", nullable = false, length = 1000)
     private String text;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
+    @JoinColumn(name = "item_id")
     private Item item;
 
-    @Column(name = "author_id", nullable = false)
-    private Long authorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id")
+    private User author;
 
-    @Column(nullable = false)
+    @Column(name = "created")
     private LocalDateTime created;
 
     @Override
@@ -51,7 +52,7 @@ public class Comment {
                 "id=" + id +
                 ", text='" + text + '\'' +
                 ", itemId=" + (item != null ? item.getId() : "null") +
-                ", authorId=" + authorId +
+                ", authorId=" + author +
                 ", created=" + created +
                 '}';
     }

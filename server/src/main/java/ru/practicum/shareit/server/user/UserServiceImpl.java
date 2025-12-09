@@ -1,16 +1,17 @@
 package ru.practicum.shareit.server.user;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.server.exceptions.ConflictException;
 import ru.practicum.shareit.server.exceptions.NotFoundException;
-import ru.practicum.shareit.server.exceptions.UserNotFoundException;
 import ru.practicum.shareit.server.exceptions.ValidationException;
 import ru.practicum.shareit.server.user.dto.UserDto;
+
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,53 +19,75 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-
+    private final UserMapper userMapper;  // Предполагаем, что UserMapper существует и правильно настроен
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
 
     @Override
     @Transactional
     public UserDto createUser(UserDto userDto) {
-        validateUserDto(userDto);
-        User user = convertToUser(userDto);
+        validateUserDto(userDto); // Используем общую валидацию
+        if (userRepository.findByEmail(userDto.getEmail()).isPresent()) {
+            throw new ConflictException("Пользователь с email " + userDto.getEmail() + " уже существует");
+        }
+
+        User user = userMapper.toEntity(userDto);  // Используем UserMapper
         User savedUser = userRepository.save(user);
-        return convertToDto(savedUser);
+        return userMapper.toDto(savedUser);  // Используем UserMapper
     }
 
     @Override
     @Transactional
-    public UserDto updateUser(Long userId, UserDto userDto) {
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId)); // <<< ИЗМЕНЕНИЕ
+    public UserDto updateUser(Long userId, UserDto userDto) { //Убрал лишнии проверки что есть есть  уже в валидаторах
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
 
-        if (userDto.getEmail() != null && !EMAIL_PATTERN.matcher(userDto.getEmail()).matches()) {
-            throw new ValidationException("Email format is invalid"); // <<< ИЗМЕНЕНИЕ
-        }
-        if (userDto.getName() != null && userDto.getName().isBlank()) {
-            throw new ValidationException("Name cannot be blank"); // <<< ИЗМЕНЕНИЕ
-        }
+        boolean isUpdated = false;
 
         if (userDto.getName() != null) {
-            existingUser.setName(userDto.getName());
-        }
-        if (userDto.getEmail() != null) {
-            existingUser.setEmail(userDto.getEmail());
+            if (userDto.getName().isBlank()) {
+                throw new ValidationException("Name cannot be blank");
+            }
+            user.setName(userDto.getName());
+            isUpdated = true;
         }
 
-        User updatedUser = userRepository.save(existingUser);
-        return convertToDto(updatedUser);
+        if (userDto.getEmail() != null) {
+            if (userDto.getEmail().isBlank()) {
+                throw new ValidationException("Email cannot be blank");
+            }
+
+            if (!EMAIL_PATTERN.matcher(userDto.getEmail()).matches()) {
+                throw new ValidationException("Email format is invalid");
+            }
+
+            if (!userDto.getEmail().equals(user.getEmail())) {
+                Optional<User> existingUser = userRepository.findByEmail(userDto.getEmail());
+                if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+                    throw new ConflictException("Email " + userDto.getEmail() + " уже используется");
+                }
+                user.setEmail(userDto.getEmail());
+                isUpdated = true;
+            }
+        }
+
+        if (!isUpdated) {
+            throw new ValidationException("Не передано ни одного поля для обновления");
+        }
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
     }
 
     @Override
-    public UserDto getUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found with id: " + userId)); // <<< ИЗМЕНЕНИЕ
-        return convertToDto(user);
+    public UserDto getUser(Long userId) { //Переименовываем чтоб не путать
+        User user = getUserEntityById(userId);
+        return userMapper.toDto(user);
     }
 
     @Override
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(this::convertToDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -72,33 +95,26 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(Long userId) {
         if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException("User not found with ID: " + userId);
+            throw new NotFoundException("Пользователь с id: " + userId + " не найден");
         }
-        userRepository.deleteUserById(userId); // Вызываем кастомный метод
+        userRepository.deleteById(userId);
     }
 
-    private UserDto convertToDto(User user) {
-        return new UserDto(user.getId(), user.getName(), user.getEmail());
+    private User getUserEntityById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id: " + userId + " не найден"));
     }
 
-    private User convertToUser(UserDto userDto) {
-        User user = new User();
-        user.setId(userDto.getId());
-        user.setName(userDto.getName());
-        user.setEmail(userDto.getEmail());
-        return user;
-    }
-
-    // Вспомогательный метод для ручной валидации UserDto
+    // Вспомогательный метод для ручной валидации UserDto - перенесен
     private void validateUserDto(UserDto userDto) {
         if (userDto.getName() == null || userDto.getName().isBlank()) {
-            throw new ValidationException("Name cannot be blank"); // <<< ИЗМЕНЕНИЕ
+            throw new ValidationException("Name cannot be blank");
         }
         if (userDto.getEmail() == null || userDto.getEmail().isBlank()) {
-            throw new ValidationException("Email cannot be blank"); // <<< ИЗМЕНЕНИЕ
+            throw new ValidationException("Email cannot be blank");
         }
         if (!EMAIL_PATTERN.matcher(userDto.getEmail()).matches()) {
-            throw new ValidationException("Email format is invalid"); // <<< ИЗМЕНЕНИЕ
+            throw new ValidationException("Email format is invalid");
         }
     }
 }

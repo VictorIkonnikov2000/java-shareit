@@ -1,49 +1,24 @@
 package ru.practicum.shareit.gateway.exceptions;
 
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
-import javax.validation.ConstraintViolationException;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-@Slf4j
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException e) {
-        log.warn("NotFoundException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException e) {
-        log.warn("ForbiddenException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.FORBIDDEN);
-    }
-
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponse> handleConflictException(ConflictException e) {
-        log.warn("ConflictException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(ValidationException e) {
-        log.warn("ValidationException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(InvalidItemDataException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidItemDataException(InvalidItemDataException e) {
-        log.warn("InvalidItemDataException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
-    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
@@ -51,19 +26,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(InternalServerErrorException.class)
-    public ResponseEntity<ErrorResponse> handleInternalServerErrorException(InternalServerErrorException e) {
-        log.warn("InternalServerErrorException caught: {}", e.getMessage());
-        return new ResponseEntity<>(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         List<String> errors = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.toList());
         log.warn("MethodArgumentNotValidException caught: {}", errors);
         return new ResponseEntity<>(new ErrorResponse("Ошибка валидации данных", errors), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<Map<String, String>> handleMissingRequestHeader(MissingRequestHeaderException e) {
+        log.warn("MissingRequestHeaderException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Отсутствует обязательный заголовок: " + e.getHeaderName()));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -75,10 +50,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(new ErrorResponse("Ошибка валидации", errors), HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(Throwable.class)
-    public ResponseEntity<ErrorResponse> handleThrowable(final Throwable e) {
-        log.error("Unhandled exception: {}", e.getMessage(), e);
-        return new ResponseEntity<>(new ErrorResponse("Произошла непредвиденная ошибка на сервере.", List.of(e.getMessage())), HttpStatus.INTERNAL_SERVER_ERROR);
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, String>> handleMissingRequestParam(MissingServletRequestParameterException e) {
+        log.warn("MissingServletRequestParameterException: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Отсутствует обязательный параметр: " + e.getParameterName()));
     }
-}
 
+    // Добавляем обработку NoHandlerFoundException (404 Not Found)
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<Map<String, String>> handleNoHandlerFoundException(NoHandlerFoundException ex, WebRequest request) {
+        log.warn("NoHandlerFoundException: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Ресурс не найден"));
+    }
+
+    //Общий обработчик исключений, должен идти последним
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleInternalError(Exception e) {
+        log.error("Внутренняя ошибка сервера: {}", e.getMessage(), e); // Логируем с указанием самого exception
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Внутренняя ошибка сервера"));
+    }
+
+}

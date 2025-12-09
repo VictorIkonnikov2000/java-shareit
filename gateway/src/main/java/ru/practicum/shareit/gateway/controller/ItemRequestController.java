@@ -1,59 +1,50 @@
 package ru.practicum.shareit.gateway.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.gateway.client.ItemRequestClient;
-import ru.practicum.shareit.gateway.dto.ItemRequestDto;
+import ru.practicum.shareit.gateway.dto.ItemRequestCreateDto;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
-
-@Controller
-@RequestMapping("/requests")
+@RestController
 @RequiredArgsConstructor
-@Slf4j
+@RequestMapping(path = "/requests")
 @Validated
+@Slf4j
 public class ItemRequestController {
-
     private final ItemRequestClient itemRequestClient;
     private static final String USER_ID_HEADER = "X-Sharer-User-Id";
 
     @PostMapping
-    public ResponseEntity<Object> createItemRequest(
-            @RequestHeader(USER_ID_HEADER) Long userId,
-            @Valid @RequestBody ItemRequestDto itemRequestDto) {
-        log.info("Creating ItemRequest {} with userId={}", itemRequestDto, userId);
-        return itemRequestClient.createItemRequest(userId, itemRequestDto);
+    public ResponseEntity<Object> createRequest(@RequestBody @Valid ItemRequestCreateDto requestDto,
+                                                @RequestHeader(USER_ID_HEADER) Long requestorId) {
+        log.info("Создание запроса на вещь: пользователь={}, описание='{}'",
+                requestorId, requestDto.getDescription());
+        return itemRequestClient.createRequest(requestDto, requestorId);
     }
 
     @GetMapping
-    public ResponseEntity<Object> getItemRequestsByUserId(
-            @RequestHeader(USER_ID_HEADER) Long userId) {
-        log.info("Get ItemRequests by userId={}", userId);
-        return itemRequestClient.getItemRequestsByUserId(userId);
+    public ResponseEntity<Object> getUserRequests(@RequestHeader(USER_ID_HEADER) Long requestorId) {
+        log.info("Получение запросов пользователя: ID={}", requestorId);
+        return itemRequestClient.getUserRequests(requestorId);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<Object> getAllItemRequests(
-            @RequestHeader(USER_ID_HEADER) Long userId,
-            @PositiveOrZero @RequestParam(defaultValue = "0") Integer from,
-            @Positive @RequestParam(defaultValue = "10") Integer size) {
-        log.info("Get all ItemRequests with userId={}, from={}, size={}", userId, from, size);
-        return itemRequestClient.getAllItemRequests(userId, from, size);
+    public ResponseEntity<Object> getAllRequests(@RequestHeader(USER_ID_HEADER) Long userId,
+                                                 @RequestParam(defaultValue = "0") int from,
+                                                 @RequestParam(defaultValue = "10") int size) {
+        log.info("Получение всех запросов других пользователей: пользователь={}, from={}, size={}",
+                userId, from, size);
+        return itemRequestClient.getAllRequests(userId, from, size);
     }
-
 
     @GetMapping("/{requestId}")
-    public ResponseEntity<Object> getItemRequestById(
-            @RequestHeader(USER_ID_HEADER) Long userId,
-            @PathVariable Long requestId) {
-        log.info("Get ItemRequest by requestId={} and userId={}", requestId, userId);
-        return itemRequestClient.getItemRequestById(userId, requestId);
+    public ResponseEntity<Object> getRequestById(@PathVariable Long requestId,
+                                                 @RequestHeader(USER_ID_HEADER) Long userId) {
+        log.info("Получение запроса: ID={}, пользователь={}", requestId, userId);
+        return itemRequestClient.getRequestById(requestId, userId);
     }
 }
-

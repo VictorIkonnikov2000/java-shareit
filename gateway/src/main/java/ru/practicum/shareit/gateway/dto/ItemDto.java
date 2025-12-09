@@ -1,32 +1,23 @@
 package ru.practicum.shareit.gateway.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
-@NoArgsConstructor
+@Builder
 public class ItemDto {
     private Long id;
-    @NotBlank(message = "Название не может быть пустым")
-    @Size(max = 255, message = "Название не может быть длиннее 255 символов")
+
+    @NotBlank(message = "Название не должно быть пустое")
     private String name;
-    @NotBlank(message = "Описание не может быть пустым")
-    @Size(max = 512, message = "Описание не может быть длиннее 512 символов")
+
+    @NotBlank(message = "Описание не должно быть пустое")
     private String description;
-    @NotNull(message = "Статус доступности не может быть пустым")
+
+    @NotNull(message = "Статус должен быть указан")
     private Boolean available;
-    private Long userId;
 
-    private BookingShortDto lastBooking;
-    private BookingShortDto nextBooking;
-
-    private Long request;
-    private List<CommentDto> comments = new ArrayList<>(); // <-- Вот здесь! Инициализируем пустым списком
-
+    private Long requestId;
 }

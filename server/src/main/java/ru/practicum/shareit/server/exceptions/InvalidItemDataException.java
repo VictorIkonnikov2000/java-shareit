@@ -9,4 +9,3 @@ public class InvalidItemDataException extends RuntimeException {
         super(message);
     }
 }
-

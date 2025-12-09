@@ -1,13 +1,10 @@
 package ru.practicum.shareit.server.booking;
 
-
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 import ru.practicum.shareit.server.item.Item;
 import ru.practicum.shareit.server.user.User;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -15,9 +12,10 @@ import java.util.Objects;
 @Table(name = "bookings")
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class Booking {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,17 +27,15 @@ public class Booking {
     private LocalDateTime end;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
+    @JoinColumn(name = "item_id")
     private Item item;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booker_id", nullable = false)
+    @JoinColumn(name = "booker_id")
     private User booker;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private Status status;
-
+    private BookingStatus status;
 
     @Override
     public boolean equals(Object o) {
@@ -51,9 +47,8 @@ public class Booking {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id != null ? Objects.hash(id) : super.hashCode(); // Или просто 0, или константа
     }
-
 
     @Override
     public String toString() {
@@ -62,8 +57,8 @@ public class Booking {
                 ", start=" + start +
                 ", end=" + end +
                 ", status=" + status +
-                ", itemId=" + (item != null ? item.getId() : "null") +
-                ", bookerId=" + (booker != null ? booker.getId() : "null") +
+                ", itemId=" + (item != null ? item.getId() : "null") + // Используем ID Item
+                ", bookerId=" + (booker != null ? booker.getId() : "null") + // Используем ID Booker
                 '}';
     }
 }

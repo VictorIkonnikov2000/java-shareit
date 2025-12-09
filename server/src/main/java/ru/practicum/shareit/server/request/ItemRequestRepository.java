@@ -1,22 +1,16 @@
 package ru.practicum.shareit.server.request;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph; // Добавили EntityGraph
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.practicum.shareit.server.user.User;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional; // Добавили Optional
 
+@Repository
 public interface ItemRequestRepository extends JpaRepository<ItemRequest, Long> {
 
-    @EntityGraph(attributePaths = {"items", "requestor"}) // <--- ИЗМЕНЕНИЕ ЗДЕСЬ!
-    List<ItemRequest> findByRequestorIdOrderByCreatedDesc(Long requestorId);
+    List<ItemRequest> findByRequestorId(Long requestorId, Sort sort);
 
-    @EntityGraph(attributePaths = {"items", "requestor"}) // <--- ИЗМЕНЕНИЕ ЗДЕСЬ!
-    Page<ItemRequest> findByRequestorNot(User requestor, Pageable pageable);
+    List<ItemRequest> findByRequestorIdNot(Long requestorId, Sort sort);
 
-    @EntityGraph(attributePaths = {"items", "requestor"}) // <--- ИЗМЕНЕНИЕ ЗДЕСЬ!
-    Optional<ItemRequest> findById(Long id);
 }
