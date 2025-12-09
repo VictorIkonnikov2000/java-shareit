@@ -55,7 +55,8 @@ public class BookingServiceImpl implements BookingService {
         Booking savedBooking = bookingRepository.save(booking);
         return bookingMapper.toDto(savedBooking);
     }
-    //Апрув
+
+
     @Override
     public BookingDto approveBooking(Long bookingId, Long ownerId, boolean approved) {
         Booking booking = bookingRepository.findById(bookingId)
