@@ -34,16 +34,24 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto createItem(ItemDto itemDto, Long ownerId) {
         User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + ownerId + " не найден."));
 
+        // *** Добавляем валидацию для description и available ***
         if (itemDto.getName() == null || itemDto.getName().isBlank()) {
-            throw new ValidationException("Название вещи не может быть пустым");
+            throw new ValidationException("Название вещи не может быть пустым.");
         }
+        if (itemDto.getDescription() == null || itemDto.getDescription().isBlank()) {
+            throw new ValidationException("Описание вещи не может быть пустым.");
+        }
+        if (itemDto.getAvailable() == null) {
+            throw new ValidationException("Доступность вещи должна быть указана.");
+        }
+        // ******************************************************
 
         ItemRequest request = null;
         if (itemDto.getRequestId() != null) {
             request = itemRequestRepository.findById(itemDto.getRequestId())
-                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequestId() + " не найден"));
+                    .orElseThrow(() -> new NotFoundException("Запрос с id " + itemDto.getRequestId() + " не найден."));
         }
 
         Item item = ItemMapper.toItem(itemDto, owner, request);
